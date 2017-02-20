@@ -13,7 +13,7 @@ class Config extends Acces {
 	 * HTMl compressed Y/n
 	 * @var boolean Compression[true] No-compression[false]
 	 */
-	private $compression = true;
+	private $compression = false;
 	/**
 	 * Production type
 	 * @var boolean Developement[true] Production[false]
