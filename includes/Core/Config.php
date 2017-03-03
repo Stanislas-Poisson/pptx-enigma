@@ -1,5 +1,5 @@
 <?php
-namespace PPTXenigma;
+namespace Core;
 ##########
 # Configuration
 # I   - Var, init & close
@@ -30,7 +30,7 @@ class Config extends Acces {
 		}
 
 		# Params for SESSION
-		session_save_path( $this->direname . 'sessions/' );
+		session_save_path( $this->dirName . 'sessions/' );
 		ini_set( 'session.gc_probability', '1' );
 		ini_set( 'session.gc_divisor', '100' );
 		ini_set( 'session.gc_maxlifetime', 7200 );
