@@ -1,5 +1,4 @@
 <?php
-namespace PPTXenigma;
 class Autoloader {
 	/**
 	 * The function at call to launch the autloload
