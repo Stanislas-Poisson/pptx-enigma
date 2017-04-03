@@ -11,7 +11,7 @@ class Acces{
 	protected $siteName = 'PPTX-Enigma';
 
 	# URI of project
-	protected $uriApp = 'http://http://pptx-enigma.my-workflow.fr/';
+	protected $uriApp = 'http://pptx-enigma.my-workflow.fr/';
 
 	# Maintenance
 	public $maintenance = false;

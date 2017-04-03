@@ -1,0 +1,100 @@
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .atom .css .js .json .jsonld .rss .vtt .webapp .xml
+
+Header set Content-Language: fr-FR
+
+Options -indexes +followsymlinks +multiviews
+
+# ErrorDocument 400 error/400.php
+# ErrorDocument 401 error/401.php
+# ErrorDocument 403 error/403.php
+# ErrorDocument 404 error/404.php
+# ErrorDocument 500 error/500.php
+
+RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# RewriteCond %{HTTP_HOST} !^www\.
+# RewriteRule .* https://www.%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteRule	^([\w\d\-\.]+).(css|js)$ $2/$1.$2 [L]
+RewriteRule	^([\w\d\-\.]+).(jpg|jpeg|png)$ img/$1.$2 [L]
+
+AddType audio/mp4 m4a f4a f4b
+AddType audio/ogg oga ogg opus
+AddType application/json json map
+AddType application/ld+json jsonld
+AddType application/javascript js
+AddType video/mp4 f4v f4p m4v mp4
+AddType video/ogg ogv
+AddType video/webm webm
+AddType video/x-flv flv
+AddType application/font-woff woff
+AddType application/font-woff2 woff2
+AddType application/vnd.ms-fontobject eot
+AddType application/x-font-ttf ttc ttf
+AddType font/opentype otf
+AddType image/svg+xml svgz
+AddEncoding gzip svgz
+AddType application/octet-stream safariextz
+AddType application/x-chrome-extension crx
+AddType application/x-opera-extension oex
+AddType application/x-web-app-manifest+json webapp
+AddType application/x-xpinstall xpi
+AddType application/xml atom rdf rss xml
+AddType image/webp webp
+AddType image/x-icon cur ico
+AddType text/cache-manifest appcache manifest
+AddType text/vtt vtt
+AddType text/x-component htc
+AddType text/x-vcard vcf
+
+SetOutputFilter DEFLATE
+AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/x-javascript application/x-httpd-php
+BrowserMatch ^Mozilla/4 gzip-only-text/html
+BrowserMatch ^Mozilla/4\.0[678] no-gzip
+BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+BrowserMatch \bMSI[E] !no-gzip !gzip-only-text/html
+SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png)$ no-gzip
+Header append Vary User-Agent env=!dont-vary
+
+FileETag None
+Header unset ETag
+Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+
+ExpiresActive On
+ExpiresDefault "access plus 7200 seconds"
+ExpiresByType image/jpg "access plus 2592000 seconds"
+ExpiresByType image/jpeg "access plus 2592000 seconds"
+ExpiresByType image/png "access plus 2592000 seconds"
+ExpiresByType image/gif "access plus 2592000 seconds"
+AddType image/x-icon .ico
+ExpiresByType image/ico "access plus 2592000 seconds"
+ExpiresByType image/icon "access plus 2592000 seconds"
+ExpiresByType image/x-icon "access plus 2592000 seconds"
+ExpiresByType text/css "access plus 2592000 seconds"
+ExpiresByType text/javascript "access plus 2592000 seconds"
+ExpiresByType text/html "access plus 7200 seconds"
+ExpiresByType application/xhtml+xml "access plus 7200 seconds"
+ExpiresByType application/javascript "access plus 2592000 seconds"
+ExpiresByType application/x-javascript "access plus 2592000 seconds"
+ExpiresByType application/x-shockwave-flash "access plus 2592000 seconds"
+<FilesMatch "\.(ico|jpe?g|png|gif|swf|gz|ttf|eot|woff)$">
+	Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>
+<FilesMatch "\.(css)$">
+	Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>
+<FilesMatch "\.(js)$">
+	Header set Cache-Control "max-age=2592000, private"
+</FilesMatch>
+<FilesMatch "\.(html|htm)$">
+	Header set Cache-Control "max-age=7200, public"
+</FilesMatch>
+<FilesMatch "\.(pl|php|cgi|spl|scgi|fcgi)$">
+	Header unset Cache-Control
+</FilesMatch>
+Header unset ETag
+FileETag none
