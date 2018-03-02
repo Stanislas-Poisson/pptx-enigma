@@ -1,0 +1,37 @@
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .atom .css .js .json .jsonld .rss .vtt .webapp .xml
+
+Header set Content-Language: fr-FR
+
+Options -indexes +followsymlinks +multiviews
+
+# ErrorDocument 400 error/400.php
+# ErrorDocument 401 error/401.php
+# ErrorDocument 403 error/403.php
+# ErrorDocument 404 error/404.php
+# ErrorDocument 500 error/500.php
+
+RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# RewriteCond %{HTTP_HOST} !^www\.
+# RewriteRule .* https://www.%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteRule	^(.*)$	index.php	[L]
+
+AddType image/x-icon cur ico
+
+SetOutputFilter DEFLATE
+AddOutputFilterByType DEFLATE text/html application/x-httpd-php
+BrowserMatch ^Mozilla/4 gzip-only-text/html
+BrowserMatch ^Mozilla/4\.0[678] no-gzip
+BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+BrowserMatch \bMSI[E] !no-gzip !gzip-only-text/html
+SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png)$ no-gzip
+Header append Vary User-Agent env=!dont-vary
+
+FileETag None
+Header unset ETag
+Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
