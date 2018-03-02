@@ -1,17 +1,17 @@
 <?php
-namespace PPTXenigma;
+namespace Core;
 class Acces{
 	# Use of debug
 	protected $debug = true;
 
 	# project place
-	protected $direname = '/REAL/DIR/TO/PROJECT/';
+	protected $dirName = '/home/myworkflcv/laboratoires/pptx-enigma/';
 
 	# Name of the website
 	protected $siteName = 'PPTX-Enigma';
 
 	# URI of project
-	protected $uriApp = 'http://NDD.TLD/';
+	protected $uriApp = 'http://pptx-enigma.my-workflow.fr/';
 
 	# Maintenance
 	public $maintenance = false;
@@ -22,7 +22,7 @@ class Acces{
 	public function urlAuth( $key = null ) {
 		$l = [
 			'base' => $this->uriApp,
-			'static' => 'http://static.NDD.TLD/'
+			'static' => 'http://static.http://pptx-enigma.my-workflow.fr/'
 		];
 		if( ( $key !== null ) && array_key_exists( $key, $l ) ) {
 			return $l[ $key ];
