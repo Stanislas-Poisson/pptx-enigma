@@ -18,9 +18,9 @@ use ZipArchive;
  */
 final class PptxBuilder
 {
-    private const NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
+    private const string NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
 
-    private const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    private const string REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
     /**
      * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides the slides in the order of the presentation
@@ -73,15 +73,15 @@ final class PptxBuilder
      */
     public static function zip(array $files): string
     {
-        $path = (string) tempnam(sys_get_temp_dir(), 'pptx');
-        $zip  = new ZipArchive();
-        $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $path        = (string) tempnam(sys_get_temp_dir(), 'pptx');
+        $zipArchive  = new ZipArchive();
+        $zipArchive->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         foreach ($files as $name => $content) {
-            $zip->addFromString($name, $content);
+            $zipArchive->addFromString($name, $content);
         }
 
-        $zip->close();
+        $zipArchive->close();
 
         return $path;
     }

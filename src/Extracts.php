@@ -21,9 +21,9 @@ use InvalidArgumentException;
  */
 final readonly class Extracts
 {
-    private const NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+    private const string NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 
-    private const NS_PRESENTATION = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+    private const string NS_PRESENTATION = 'http://schemas.openxmlformats.org/presentationml/2006/main';
 
     public function __construct(
         private string $path,
@@ -70,8 +70,8 @@ final readonly class Extracts
         $voiceOvers = [];
 
         foreach ($found as $references) {
-            foreach ($references as $voiceOver) {
-                $voiceOvers[] = $voiceOver;
+            foreach ($references as $reference) {
+                $voiceOvers[] = $reference;
             }
         }
 
@@ -105,12 +105,12 @@ final readonly class Extracts
      */
     private function collect(Notes $notes, int $slide, string $sign): array
     {
-        $html       = new HtmlRenderer($this->options);
-        $text       = new TextRenderer($this->options);
-        $opening    = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
-        $voiceOvers = [];
-        $speaker    = null;
-        $reference  = '';
+        $htmlRenderer       = new HtmlRenderer($this->options);
+        $textRenderer       = new TextRenderer($this->options);
+        $opening            = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
+        $voiceOvers         = [];
+        $speaker            = null;
+        $reference          = '';
 
         /** @var list<Paragraph> $content */
         $content = [];
@@ -123,7 +123,7 @@ final readonly class Extracts
             }
 
             if (null !== $speaker) {
-                $voiceOvers[] = new VoiceOver($speaker, $reference, $slide, $html->render($content), $text->render($content));
+                $voiceOvers[] = new VoiceOver($speaker, $reference, $slide, $htmlRenderer->render($content), $textRenderer->render($content));
             }
 
             $speaker = null;
@@ -149,17 +149,18 @@ final readonly class Extracts
      */
     private function paragraphs(Notes $notes): array
     {
-        $xpath = new DOMXPath($notes->document);
-        $xpath->registerNamespace('p', self::NS_PRESENTATION);
-        $xpath->registerNamespace('a', self::NS_DRAWING);
-        $reader     = new ParagraphReader($notes->hyperlinks);
-        $paragraphs = [];
+        $domxPath = new DOMXPath($notes->document);
+        $domxPath->registerNamespace('p', self::NS_PRESENTATION);
+        $domxPath->registerNamespace('a', self::NS_DRAWING);
 
-        $found = $xpath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p');
+        $paragraphReader     = new ParagraphReader($notes->hyperlinks);
+        $paragraphs          = [];
+
+        $found = $domxPath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p');
 
         foreach (false === $found ? [] : $found as $paragraph) {
             if ($paragraph instanceof DOMElement) {
-                $paragraphs[] = $reader->read($paragraph);
+                $paragraphs[] = $paragraphReader->read($paragraph);
             }
         }
 

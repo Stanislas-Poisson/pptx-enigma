@@ -10,11 +10,11 @@ use PPTXenigma\NotesReader;
 
 final class NotesReaderTest extends TestCase
 {
-    private const NOTES_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide';
+    private const string NOTES_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide';
 
-    private const PRESENTATION = 'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    private const string PRESENTATION = 'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
 
-    private const RELATIONSHIPS = 'xmlns="http://schemas.openxmlformats.org/package/2006/relationships"';
+    private const string RELATIONSHIPS = 'xmlns="http://schemas.openxmlformats.org/package/2006/relationships"';
 
     /**
      * @var list<string>

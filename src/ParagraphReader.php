@@ -11,20 +11,20 @@ use DOMElement;
  */
 final readonly class ParagraphReader
 {
-    private const NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+    private const string NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 
-    private const NS_RELATIONSHIPS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    private const string NS_RELATIONSHIPS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
     /**
      * @param array<string, string> $hyperlinks the URL of each link of the notes, by id of relationship
      */
     public function __construct(private array $hyperlinks = []) {}
 
-    public function read(DOMElement $paragraph): Paragraph
+    public function read(DOMElement $domElement): Paragraph
     {
         $inlines = [];
 
-        foreach ($paragraph->childNodes as $child) {
+        foreach ($domElement->childNodes as $child) {
             if (! $child instanceof DOMElement || self::NS_DRAWING !== $child->namespaceURI) {
                 continue;
             }
@@ -37,7 +37,7 @@ final readonly class ParagraphReader
             }
         }
 
-        return new Paragraph($inlines, $this->listItem($paragraph));
+        return new Paragraph($inlines, $this->listItem($domElement));
     }
 
     private function isStyled(string $value): bool
@@ -48,9 +48,9 @@ final readonly class ParagraphReader
     /**
      * A paragraph is a list item only when it has a bullet or a number.
      */
-    private function listItem(DOMElement $paragraph): ?ListItem
+    private function listItem(DOMElement $domElement): ?ListItem
     {
-        $properties = $paragraph->getElementsByTagNameNS(self::NS_DRAWING, 'pPr')->item(0);
+        $properties = $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'pPr')->item(0);
 
         if (! $properties instanceof DOMElement) {
             return null;
@@ -74,16 +74,16 @@ final readonly class ParagraphReader
         return null === $type ? null : new ListItem(max(0, (int) $properties->getAttribute('lvl')), $type);
     }
 
-    private function run(DOMElement $run): Inline
+    private function run(DOMElement $domElement): Inline
     {
-        $properties = $run->getElementsByTagNameNS(self::NS_DRAWING, 'rPr')->item(0);
+        $properties = $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'rPr')->item(0);
 
         if (! $properties instanceof DOMElement) {
-            return new Inline($run->textContent);
+            return new Inline($domElement->textContent);
         }
 
         return new Inline(
-            text: $run->textContent,
+            text: $domElement->textContent,
             bold: $this->isStyled($properties->getAttribute('b')),
             italic: $this->isStyled($properties->getAttribute('i')),
             underline: $this->isStyled($properties->getAttribute('u')),
@@ -93,9 +93,9 @@ final readonly class ParagraphReader
         );
     }
 
-    private function url(DOMElement $properties): ?string
+    private function url(DOMElement $domElement): ?string
     {
-        $link = $properties->getElementsByTagNameNS(self::NS_DRAWING, 'hlinkClick')->item(0);
+        $link = $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'hlinkClick')->item(0);
 
         return $link instanceof DOMElement ? ($this->hyperlinks[$link->getAttributeNS(self::NS_RELATIONSHIPS, 'id')] ?? null) : null;
     }

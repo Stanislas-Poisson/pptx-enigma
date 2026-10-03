@@ -35,18 +35,18 @@ final class ExtractsTest extends TestCase
 
     public function test_accepts_the_same_reference_for_two_speakers(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
-            self::slide(2, '¤ V (A) ref', 'x', '¤ V (B) ref', 'y', '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤ V (A) ref', 'x', '¤ V (B) ref', 'y', '¤'),
         ]);
 
-        self::assertSame(['A' => ['ref' => '<p>x</p>'], 'B' => ['ref' => '<p>y</p>']], $extractor->toArray());
+        self::assertSame(['A' => ['ref' => '<p>x</p>'], 'B' => ['ref' => '<p>y</p>']], $voiceOvers->toArray());
     }
 
     public function test_converts_the_hyperlinks(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
             [
                 'file'  => 2,
                 'notes' => [
@@ -73,14 +73,14 @@ final class ExtractsTest extends TestCase
 
         self::assertSame(
             '<p>See <a href="https://example.com/?a=1&amp;b=&quot;2&quot;"><b>the site</b></a> or <a href="mailto:me@example.com">mail</a> or script or unknown</p>',
-            $extractor->toArray()['S']['links'],
+            $voiceOvers->toArray()['S']['links'],
         );
     }
 
     public function test_converts_the_line_breaks(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => [
                 '¤ V (S) breaks',
                 ['runs' => ['one', ['br' => true], 'two']],
@@ -89,13 +89,13 @@ final class ExtractsTest extends TestCase
             ]],
         ]);
 
-        self::assertSame('<p>one<br>two</p>', $extractor->toArray()['S']['breaks']);
+        self::assertSame('<p>one<br>two</p>', $voiceOvers->toArray()['S']['breaks']);
     }
 
     public function test_converts_the_lists(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => [
                 '¤ V (S) lists',
                 ['runs' => ['Intro']],
@@ -120,14 +120,14 @@ final class ExtractsTest extends TestCase
             . '<p>not a list</p>'
             . '<ol><li>1<ol><li>2<ol><li>3</li></ol></li></ol></li><li>4</li></ol>'
             . '<ol><li>5</li></ol>',
-            $extractor->toArray()['S']['lists'],
+            $voiceOvers->toArray()['S']['lists'],
         );
     }
 
     public function test_converts_the_styles_and_escapes_the_text(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => [
                 '¤ V (S) styles',
                 ['runs' => [
@@ -149,7 +149,7 @@ final class ExtractsTest extends TestCase
 
         self::assertSame(
             '<p><b>bold</b> <b><i><u><s>all</s></u></i></b> off <sup>sup</sup><sub>sub</sub>flat</p><p>a &lt; b &amp; c &gt; d</p>',
-            $extractor->toArray()['S']['styles'],
+            $voiceOvers->toArray()['S']['styles'],
         );
     }
 
@@ -158,25 +158,25 @@ final class ExtractsTest extends TestCase
         $this->expectException(ExtractionException::class);
         $this->expectExceptionMessage('No sign found');
 
-        $this->extract([self::slide(1, ' ', "\u{00A0}"), self::slide(2, '¤ V (S) r', 'x', '¤')]);
+        $this->extract([$this->slide(1, ' ', "\u{00A0}"), $this->slide(2, '¤ V (S) r', 'x', '¤')]);
     }
 
     public function test_extracts_again(): void
     {
-        $path          = PptxBuilder::build([self::slide(1, '¤'), self::slide(2, '¤ V (S) r', 'x', '¤')]);
+        $path          = PptxBuilder::build([$this->slide(1, '¤'), $this->slide(2, '¤ V (S) r', 'x', '¤')]);
         $this->files[] = $path;
-        $extractor     = new Extracts($path);
+        $extracts      = new Extracts($path);
 
-        self::assertSame($extractor->extract()->toArray(), $extractor->extract()->toArray());
+        self::assertSame($extracts->extract()->toArray(), $extracts->extract()->toArray());
     }
 
     public function test_extracts_the_sample(): void
     {
-        $extractor = (new Extracts(__DIR__ . '/../examples/sample.pptx'))->extract();
+        $voiceOvers = (new Extracts(__DIR__ . '/../examples/sample.pptx'))->extract();
 
-        self::assertCount(4, $extractor);
+        self::assertCount(4, $voiceOvers);
 
-        self::assertSame('¤', $extractor->sign);
+        self::assertSame('¤', $voiceOvers->sign);
         self::assertSame([
             'Guide' => [
                 'w02_guide'   => '<p>Hello, I am the guide.</p>',
@@ -186,13 +186,13 @@ final class ExtractsTest extends TestCase
                 'w01_intro' => '<p>Welcome to this </p><p><b>fictional</b> presentation, written only to test the extractor.</p><p>It has <i>two</i> voices.</p>',
                 'w02_list'  => '<p>Three things to remember:</p><ul><li>Notes are read slide by slide.</li><li>Voices are grouped by speaker.</li><li>References identify each voice-over.</li></ul>',
             ],
-        ], $extractor->toArray());
+        ], $voiceOvers->toArray());
     }
 
     public function test_html_tags_can_be_changed(): void
     {
         $voiceOvers = $this->extract([
-            self::slide(1, '¤'),
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => [
                 '¤ V (S) ref',
                 ['runs' => [['t' => 'a', 'b' => '1'], ['t' => 'b', 'i' => '1', 'baseline' => 10], ['t' => 'c', 'u' => 'sng']]],
@@ -205,18 +205,18 @@ final class ExtractsTest extends TestCase
 
     public function test_ignores_the_number_of_the_slide_and_the_other_placeholders(): void
     {
-        $extractor = $this->extract([self::slide(1, '¤'), self::slide(2, '¤ V (S) r', 'x', '¤')]);
+        $voiceOvers = $this->extract([$this->slide(1, '¤'), $this->slide(2, '¤ V (S) r', 'x', '¤')]);
 
-        self::assertSame('¤', $extractor->sign);
-        self::assertStringNotContainsString('‹', json_encode($extractor->toArray(), JSON_THROW_ON_ERROR));
+        self::assertSame('¤', $voiceOvers->sign);
+        self::assertStringNotContainsString('‹', json_encode($voiceOvers->toArray(), JSON_THROW_ON_ERROR));
     }
 
     public function test_keeps_the_first_or_the_last_of_two_voice_overs_with_the_same_reference(): void
     {
         $slides = [
-            self::slide(1, '¤'),
-            self::slide(2, '¤ V (S) ref', 'first', '¤', '¤ V (S) other', 'x', '¤'),
-            self::slide(3, '¤ V (S) ref', 'last', '¤'),
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤ V (S) ref', 'first', '¤', '¤ V (S) other', 'x', '¤'),
+            $this->slide(3, '¤ V (S) ref', 'last', '¤'),
         ];
 
         self::assertSame(
@@ -231,31 +231,31 @@ final class ExtractsTest extends TestCase
 
     public function test_keeps_the_first_paragraph_of_a_voice_over(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
-            self::slide(2, '¤ VOICE (Speaker) ref', 'First', 'Second', '¤ END'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤ VOICE (Speaker) ref', 'First', 'Second', '¤ END'),
         ]);
 
-        self::assertSame(['Speaker' => ['ref' => '<p>First</p><p>Second</p>']], $extractor->toArray());
+        self::assertSame(['Speaker' => ['ref' => '<p>First</p><p>Second</p>']], $voiceOvers->toArray());
     }
 
     public function test_leaves_no_file_behind(): void
     {
-        $before        = self::temporaryFiles();
-        $path          = PptxBuilder::build([self::slide(1, '¤')]);
+        $before        = $this->temporaryFiles();
+        $path          = PptxBuilder::build([$this->slide(1, '¤')]);
         $this->files[] = $path;
-        $during        = self::temporaryFiles();
+        $during        = $this->temporaryFiles();
 
         (new Extracts($path, new Options(sign: '¤')))->extract();
 
-        self::assertSame($during, self::temporaryFiles());
+        self::assertSame($during, $this->temporaryFiles());
         self::assertCount(count($before) + 1, $during);
     }
 
     public function test_link_schemes_can_be_changed(): void
     {
         $voiceOvers = $this->extract([
-            self::slide(1, '¤'),
+            $this->slide(1, '¤'),
             [
                 'file'  => 2,
                 'notes' => ['¤ V (S) ref', ['runs' => [['t' => 'web', 'link' => 'rId1'], ' ', ['t' => 'mail', 'link' => 'rId2']]], '¤'],
@@ -268,25 +268,25 @@ final class ExtractsTest extends TestCase
 
     public function test_reads_several_voice_overs_in_the_same_notes_without_a_closing_line(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
-            self::slide(2, '¤ VOICE (B) one', 'x', '¤ VOICE (A) two', 'y', '¤ END', 'ignored', '¤ VOICE (B) three', 'z', '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤ VOICE (B) one', 'x', '¤ VOICE (A) two', 'y', '¤ END', 'ignored', '¤ VOICE (B) three', 'z', '¤'),
         ]);
 
-        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $extractor->toArray());
+        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $voiceOvers->toArray());
     }
 
     public function test_reads_the_slides_in_the_order_of_the_presentation(): void
     {
         // The files are numbered 1, 2, 10 and 11, but the presentation shows them as 11, 2, 10, 1.
-        $extractor = $this->extract([
-            self::slide(11, '¤'),
-            self::slide(2, '¤ VOICE (Speaker) first', 'A', '¤ END'),
-            self::slide(10, '¤ VOICE (Speaker) second', 'B', '¤ END'),
-            self::slide(1, '¤ VOICE (Speaker) third', 'C', '¤ END'),
+        $voiceOvers = $this->extract([
+            $this->slide(11, '¤'),
+            $this->slide(2, '¤ VOICE (Speaker) first', 'A', '¤ END'),
+            $this->slide(10, '¤ VOICE (Speaker) second', 'B', '¤ END'),
+            $this->slide(1, '¤ VOICE (Speaker) third', 'C', '¤ END'),
         ]);
 
-        self::assertSame(['first', 'second', 'third'], array_keys($extractor->toArray()['Speaker']));
+        self::assertSame(['first', 'second', 'third'], array_keys($voiceOvers->toArray()['Speaker']));
     }
 
     public function test_rejects_a_reference_used_twice_for_the_same_speaker(): void
@@ -296,10 +296,10 @@ final class ExtractsTest extends TestCase
 
         // The second slide has no notes, but it counts in the number of the slide.
         $this->extract([
-            self::slide(1, '¤'),
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => null],
-            self::slide(3, '¤ V (Speaker) ref', 'x', '¤'),
-            self::slide(4, '¤ V (Speaker) ref', 'y', '¤'),
+            $this->slide(3, '¤ V (Speaker) ref', 'x', '¤'),
+            $this->slide(4, '¤ V (Speaker) ref', 'y', '¤'),
         ]);
     }
 
@@ -309,46 +309,46 @@ final class ExtractsTest extends TestCase
         $this->expectExceptionMessage('The voice-over "Speaker" of the reference "ref" on slide 3 is not closed.');
 
         $this->extract([
-            self::slide(1, '¤'),
+            $this->slide(1, '¤'),
             ['file' => 2, 'notes' => null],
-            self::slide(3, '¤ VOICE (Speaker) ref', 'x'),
+            $this->slide(3, '¤ VOICE (Speaker) ref', 'x'),
         ]);
     }
 
     public function test_sorts_the_speakers(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
-            self::slide(2, '¤ V (b) r', 'x', '¤ V (B) r', 'x', '¤ V (a) r', 'x', '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤ V (b) r', 'x', '¤ V (B) r', 'x', '¤ V (a) r', 'x', '¤'),
         ]);
 
-        self::assertSame(['B', 'a', 'b'], array_keys($extractor->toArray()));
+        self::assertSame(['B', 'a', 'b'], array_keys($voiceOvers->toArray()));
     }
 
     public function test_trims_the_speaker_and_the_reference(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '¤'),
-            self::slide(2, '¤  VOICE OVER  ( The Guide )   ref 1  ', 'x', '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '¤'),
+            $this->slide(2, '¤  VOICE OVER  ( The Guide )   ref 1  ', 'x', '¤'),
         ]);
 
-        self::assertSame(['The Guide' => ['ref 1' => '<p>x</p>']], $extractor->toArray());
+        self::assertSame(['The Guide' => ['ref 1' => '<p>x</p>']], $voiceOvers->toArray());
     }
 
     public function test_uses_the_sign_that_is_set_and_searches_the_first_notes(): void
     {
-        $extractor = $this->extract([
-            self::slide(1, '§ V (S) one', 'x', '§', '¤ V (S) other', 'y', '¤'),
+        $voiceOvers = $this->extract([
+            $this->slide(1, '§ V (S) one', 'x', '§', '¤ V (S) other', 'y', '¤'),
         ], new Options(sign: '§'));
 
-        self::assertSame('§', $extractor->sign);
-        self::assertSame(['S' => ['one' => '<p>x</p>']], $extractor->toArray());
+        self::assertSame('§', $voiceOvers->sign);
+        self::assertSame(['S' => ['one' => '<p>x</p>']], $voiceOvers->toArray());
     }
 
     public function test_writes_plain_text(): void
     {
         $voiceOvers = $this->extract([
-            self::slide(1, '¤'),
+            $this->slide(1, '¤'),
             [
                 'file'  => 2,
                 'notes' => [
@@ -375,24 +375,6 @@ final class ExtractsTest extends TestCase
     }
 
     /**
-     * @return array{file: int, notes: list<mixed>}
-     */
-    private static function slide(int $file, string ...$lines): array
-    {
-        return ['file' => $file, 'notes' => array_values($lines)];
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function temporaryFiles(): array
-    {
-        $files = glob(sys_get_temp_dir() . '/*');
-
-        return false === $files ? [] : $files;
-    }
-
-    /**
      * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides
      */
     private function extract(array $slides, ?Options $options = null): VoiceOvers
@@ -401,5 +383,23 @@ final class ExtractsTest extends TestCase
         $this->files[] = $path;
 
         return (new Extracts($path, $options ?? new Options()))->extract();
+    }
+
+    /**
+     * @return array{file: int, notes: list<mixed>}
+     */
+    private function slide(int $file, string ...$lines): array
+    {
+        return ['file' => $file, 'notes' => array_values($lines)];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function temporaryFiles(): array
+    {
+        $files = glob(sys_get_temp_dir() . '/*');
+
+        return false === $files ? [] : $files;
     }
 }

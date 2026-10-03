@@ -11,7 +11,7 @@ use InvalidArgumentException;
  */
 final class Cli
 {
-    private const USAGE = <<<'TXT'
+    private const string USAGE = <<<'TXT'
         Usage: pptx-enigma <file.pptx> [options]
 
         Options:

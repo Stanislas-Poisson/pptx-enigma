@@ -16,7 +16,7 @@ final readonly class Options
     /**
      * The HTML tag of each style.
      */
-    public const DEFAULT_HTML_TAGS = [
+    public const array DEFAULT_HTML_TAGS = [
         'bold'        => 'b',
         'italic'      => 'i',
         'underline'   => 'u',
@@ -61,9 +61,9 @@ final readonly class Options
             }
         }
 
-        foreach ($linkSchemes as $scheme) {
-            if (1 !== preg_match('/^[a-z][a-z0-9+.\-]*$/', $scheme)) {
-                throw new InvalidArgumentException(sprintf('"%s" is not a valid scheme: use lowercase letters, digits, "+", "." and "-".', $scheme));
+        foreach ($linkSchemes as $linkScheme) {
+            if (1 !== preg_match('/^[a-z][a-z0-9+.\-]*$/', $linkScheme)) {
+                throw new InvalidArgumentException(sprintf('"%s" is not a valid scheme: use lowercase letters, digits, "+", "." and "-".', $linkScheme));
             }
         }
 

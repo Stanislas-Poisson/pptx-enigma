@@ -10,21 +10,7 @@ use PPTXenigma\Extracts;
 
 final class CliTest extends TestCase
 {
-    private const SAMPLE = __DIR__ . '/../examples/sample.pptx';
-
-    public function test_reports_an_extraction_error(): void
-    {
-        [$code, $out, $err] = $this->execute([self::SAMPLE, '--sign=§']);
-
-        self::assertSame(0, $code, 'A sign that is not in the notes finds no voice-over, and it is not an error.');
-        self::assertSame("[]\n", $out);
-        self::assertSame('', $err);
-
-        [$code, , $err] = $this->execute([__DIR__ . '/missing.pptx']);
-
-        self::assertSame(1, $code);
-        self::assertStringContainsString('does not exist or is not readable', $err);
-    }
+    private const string SAMPLE = __DIR__ . '/../examples/sample.pptx';
 
     public function test_reports_a_wrong_command(): void
     {
@@ -42,6 +28,20 @@ final class CliTest extends TestCase
             self::assertStringStartsWith($message, $err);
             self::assertStringContainsString('Usage: pptx-enigma', $err);
         }
+    }
+
+    public function test_reports_an_extraction_error(): void
+    {
+        [$code, $out, $err] = $this->execute([self::SAMPLE, '--sign=§']);
+
+        self::assertSame(0, $code, 'A sign that is not in the notes finds no voice-over, and it is not an error.');
+        self::assertSame("[]\n", $out);
+        self::assertSame('', $err);
+
+        [$code, , $err] = $this->execute([__DIR__ . '/missing.pptx']);
+
+        self::assertSame(1, $code);
+        self::assertStringContainsString('does not exist or is not readable', $err);
     }
 
     public function test_shows_the_help(): void

@@ -33,12 +33,12 @@ final class ParagraphReaderTest extends TestCase
 
     public function test_reads_the_list_item(): void
     {
-        $bullet  = $this->read('<a:pPr lvl="2"><a:buFont typeface="Arial"/><a:buChar char="x"/></a:pPr><a:r><a:t>x</a:t></a:r>');
-        $number  = $this->read('<a:pPr><a:buAutoNum type="arabicPeriod"/></a:pPr><a:r><a:t>x</a:t></a:r>');
-        $none    = $this->read('<a:pPr><a:buFont typeface="Arial"/><a:buNone/></a:pPr><a:r><a:t>x</a:t></a:r>');
-        $without = $this->read('<a:pPr algn="l"/><a:r><a:t>x</a:t></a:r>');
+        $paragraph  = $this->read('<a:pPr lvl="2"><a:buFont typeface="Arial"/><a:buChar char="x"/></a:pPr><a:r><a:t>x</a:t></a:r>');
+        $number     = $this->read('<a:pPr><a:buAutoNum type="arabicPeriod"/></a:pPr><a:r><a:t>x</a:t></a:r>');
+        $none       = $this->read('<a:pPr><a:buFont typeface="Arial"/><a:buNone/></a:pPr><a:r><a:t>x</a:t></a:r>');
+        $without    = $this->read('<a:pPr algn="l"/><a:r><a:t>x</a:t></a:r>');
 
-        self::assertSame([2, ListType::Bullet], [$bullet->item?->level, $bullet->item?->type]);
+        self::assertSame([2, ListType::Bullet], [$paragraph->item?->level, $paragraph->item?->type]);
         self::assertSame([0, ListType::Number], [$number->item?->level, $number->item?->type]);
         self::assertNull($none->item);
         self::assertNull($without->item);
@@ -59,11 +59,11 @@ final class ParagraphReaderTest extends TestCase
         self::assertTrue($break->lineBreak);
     }
 
-    private function read(string $xml, ParagraphReader $reader = new ParagraphReader()): Paragraph
+    private function read(string $xml, ParagraphReader $paragraphReader = new ParagraphReader()): Paragraph
     {
-        $document = new DOMDocument();
-        $document->loadXML('<a:p xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:x="urn:other" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' . $xml . '</a:p>');
+        $domDocument = new DOMDocument();
+        $domDocument->loadXML('<a:p xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:x="urn:other" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' . $xml . '</a:p>');
 
-        return $reader->read($document->documentElement ?? throw new LogicException('No element.'));
+        return $paragraphReader->read($domDocument->documentElement ?? throw new LogicException('No element.'));
     }
 }
