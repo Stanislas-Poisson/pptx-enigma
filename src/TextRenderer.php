@@ -10,9 +10,7 @@ namespace PPTXenigma;
  */
 final readonly class TextRenderer
 {
-    public function __construct(private Options $options)
-    {
-    }
+    public function __construct(private Options $options) {}
 
     /**
      * @param list<Paragraph> $paragraphs
@@ -20,6 +18,7 @@ final readonly class TextRenderer
     public function render(array $paragraphs): string
     {
         $lines = [];
+
         /** @var array<int, int> $counters the number of the last numbered item, by level */
         $counters = [];
 
@@ -34,22 +33,27 @@ final readonly class TextRenderer
 
             if (null === $item) {
                 $counters = [];
-                $lines[] = $this->inlines($paragraph, '');
+                $lines[]  = $this->inlines($paragraph, '');
 
                 continue;
             }
 
-            $counters = array_filter($counters, static fn (int $level): bool => $level <= $item->level, ARRAY_FILTER_USE_KEY);
+            $counters = array_filter(
+                $counters,
+                static fn (int $level): bool => $level <= $item->level,
+                ARRAY_FILTER_USE_KEY,
+            );
 
             if (ListType::Number === $item->type) {
                 $counters[$item->level] = ($counters[$item->level] ?? 0) + 1;
-                $marker = $counters[$item->level] . '.';
-            } else {
+                $marker                 = $counters[$item->level] . '.';
+            }
+            else {
                 unset($counters[$item->level]);
                 $marker = '-';
             }
 
-            $indent = str_repeat('  ', $item->level);
+            $indent  = str_repeat('  ', $item->level);
             $lines[] = $indent . $marker . ' ' . $this->inlines($paragraph, $indent . '  ');
         }
 

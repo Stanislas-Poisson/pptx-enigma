@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace PPTXenigma;
 
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+
 /**
  * The voice-overs of a presentation, sorted by speaker, then in the order of the slides.
  *
- * @implements \IteratorAggregate<int, VoiceOver>
+ * @implements IteratorAggregate<int, VoiceOver>
  */
-final readonly class VoiceOvers implements \Countable, \IteratorAggregate
+final readonly class VoiceOvers implements Countable, IteratorAggregate
 {
+    private const int JSON_FLAGS = JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+                                                       | JSON_UNESCAPED_SLASHES;
+
     /**
      * @param string          $sign       the sign that delimited the voice-overs
      * @param list<VoiceOver> $voiceOvers
@@ -18,8 +25,7 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
     public function __construct(
         public string $sign,
         private array $voiceOvers,
-    ) {
-    }
+    ) {}
 
     public function count(): int
     {
@@ -27,11 +33,11 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \ArrayIterator<int, VoiceOver>
+     * @return ArrayIterator<int, VoiceOver>
      */
-    public function getIterator(): \ArrayIterator
+    public function getIterator(): ArrayIterator
     {
-        return new \ArrayIterator($this->voiceOvers);
+        return new ArrayIterator($this->voiceOvers);
     }
 
     /**
@@ -48,29 +54,29 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
         return $voiceOvers;
     }
 
-    public function toJson(Format $format = Format::Html): string
-    {
-        return json_encode($this->toArray($format), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    }
-
     /**
      * A fragment of HTML: a heading for each speaker and each reference, then the voice-over.
      */
     public function toHtml(): string
     {
-        $html = '';
+        $html    = '';
         $speaker = null;
 
         foreach ($this->voiceOvers as $voiceOver) {
             if ($voiceOver->speaker !== $speaker) {
                 $speaker = $voiceOver->speaker;
-                $html .= '<h2>' . htmlspecialchars($speaker, ENT_NOQUOTES | ENT_SUBSTITUTE) . "</h2>\n";
+                $html .= '<h2>' . $this->escape($speaker) . "</h2>\n";
             }
 
-            $html .= '<h3>' . htmlspecialchars($voiceOver->reference, ENT_NOQUOTES | ENT_SUBSTITUTE) . "</h3>\n" . $voiceOver->html . "\n";
+            $html .= '<h3>' . $this->escape($voiceOver->reference) . "</h3>\n" . $voiceOver->html . "\n";
         }
 
         return $html;
+    }
+
+    public function toJson(Format $format = Format::Html): string
+    {
+        return json_encode($this->toArray($format), self::JSON_FLAGS);
     }
 
     /**
@@ -78,12 +84,12 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
      */
     public function toText(): string
     {
-        $text = '';
+        $text    = '';
         $speaker = null;
 
         foreach ($this->voiceOvers as $voiceOver) {
             if ($voiceOver->speaker !== $speaker) {
-                $text .= (null === $speaker ? '' : "\n") . $voiceOver->speaker . "\n" . str_repeat('=', max(1, mb_strlen($voiceOver->speaker))) . "\n";
+                $text .= (null === $speaker ? '' : "\n") . $this->title($voiceOver->speaker);
                 $speaker = $voiceOver->speaker;
             }
 
@@ -91,5 +97,15 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
         }
 
         return $text;
+    }
+
+    private function escape(string $text): string
+    {
+        return htmlspecialchars($text, ENT_NOQUOTES | ENT_SUBSTITUTE);
+    }
+
+    private function title(string $speaker): string
+    {
+        return $speaker . "\n" . str_repeat('=', max(1, mb_strlen($speaker))) . "\n";
     }
 }

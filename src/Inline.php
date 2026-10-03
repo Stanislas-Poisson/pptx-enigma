@@ -21,6 +21,5 @@ final readonly class Inline
         public bool $strike = false,
         public int $baseline = 0,
         public ?string $url = null,
-    ) {
-    }
+    ) {}
 }

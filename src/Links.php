@@ -19,11 +19,8 @@ final class Links
         }
 
         $compact = preg_replace('/[\x00-\x20]+/', '', $url) ?? '';
+        $scheme  = 1 === preg_match('/^([a-z][a-z0-9+.\-]*):/i', $compact, $found) ? strtolower($found[1]) : '';
 
-        if (1 !== preg_match('/^([a-z][a-z0-9+.\-]*):/i', $compact, $scheme) || !in_array(strtolower($scheme[1]), $options->linkSchemes, true)) {
-            return null;
-        }
-
-        return $url;
+        return in_array($scheme, $options->linkSchemes, true) ? $url : null;
     }
 }

@@ -15,7 +15,11 @@ final readonly class Paragraph
     public function __construct(
         public array $inlines,
         public ?ListItem $item = null,
-    ) {
+    ) {}
+
+    public function isBlank(): bool
+    {
+        return '' === $this->trimmedText();
     }
 
     /**
@@ -38,10 +42,5 @@ final readonly class Paragraph
     public function trimmedText(): string
     {
         return preg_replace('/^[\s\x{00A0}]+|[\s\x{00A0}]+$/u', '', $this->text()) ?? '';
-    }
-
-    public function isBlank(): bool
-    {
-        return '' === $this->trimmedText();
     }
 }

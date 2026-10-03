@@ -12,6 +12,5 @@ final readonly class ListItem
     public function __construct(
         public int $level,
         public ListType $type,
-    ) {
-    }
+    ) {}
 }
