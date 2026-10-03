@@ -41,6 +41,14 @@ final class VoiceOversTest extends TestCase
         self::assertSame("<h2>A &lt;b&gt;</h2>\n<h3>r &amp; s</h3>\n<p>x</p>\n", $html);
     }
 
+    public function test_writes_a_text_document(): void
+    {
+        $text = $this->sample()->toText();
+
+        self::assertStringStartsWith("Guide\n=====\n\n[w02_guide]\nHello, I am the guide.\n\n[w03_goodbye]\nThat is all, thank you.\n\nNarrator\n========\n\n[w01_intro]\n", $text);
+        self::assertStringEndsWith("- References identify each voice-over.\n", $text);
+    }
+
     public function test_writes_an_array_and_json(): void
     {
         $voiceOvers = $this->sample();
@@ -59,14 +67,6 @@ final class VoiceOversTest extends TestCase
         self::assertStringStartsWith("<h2>Guide</h2>\n<h3>w02_guide</h3>\n<p>Hello, I am the guide.</p>\n<h3>w03_goodbye</h3>", $html);
         self::assertSame(2, substr_count($html, '<h2>'));
         self::assertSame(4, substr_count($html, '<h3>'));
-    }
-
-    public function test_writes_a_text_document(): void
-    {
-        $text = $this->sample()->toText();
-
-        self::assertStringStartsWith("Guide\n=====\n\n[w02_guide]\nHello, I am the guide.\n\n[w03_goodbye]\nThat is all, thank you.\n\nNarrator\n========\n\n[w01_intro]\n", $text);
-        self::assertStringEndsWith("- References identify each voice-over.\n", $text);
     }
 
     public function test_writes_the_content_in_the_format_that_is_asked(): void
