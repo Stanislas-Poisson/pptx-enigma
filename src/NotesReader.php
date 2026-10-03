@@ -15,7 +15,7 @@ final class NotesReader
     private const NS_PRESENTATION = 'http://schemas.openxmlformats.org/presentationml/2006/main';
 
     /**
-     * @return array<int, \DOMDocument> the notes, by number of slide (from 1); a slide without notes is missing
+     * @return array<int, Notes> the notes, by number of slide (from 1); a slide without notes is missing
      *
      * @throws \InvalidArgumentException when the file is not a PowerPoint 2007+ presentation
      */
@@ -39,7 +39,7 @@ final class NotesReader
     }
 
     /**
-     * @return array<int, \DOMDocument>
+     * @return array<int, Notes>
      */
     private function readNotes(\ZipArchive $zip, string $path): array
     {
@@ -65,8 +65,8 @@ final class NotesReader
             $notesPath = $this->notesPath($zip, $this->resolve('ppt', $slidePath));
             $document = null === $notesPath ? null : $this->load($zip, $notesPath);
 
-            if (null !== $document) {
-                $notes[$number] = $document;
+            if (null !== $notesPath && null !== $document) {
+                $notes[$number] = new Notes($document, $this->hyperlinks($zip, $notesPath));
             }
         }
 
@@ -94,19 +94,25 @@ final class NotesReader
     /**
      * @return array<string, string> the target of each relationship, by id
      */
-    private function targets(?\DOMDocument $relationships): array
+    private function targets(?\DOMDocument $relationships, ?string $type = null): array
     {
         $targets = [];
-        $xpath = new \DOMXPath($relationships ?? new \DOMDocument());
-        $xpath->registerNamespace('rel', self::NS_PACKAGE_REL);
 
-        foreach ($xpath->query('//rel:Relationship') ?: [] as $relationship) {
-            if ($relationship instanceof \DOMElement) {
+        foreach ($relationships?->getElementsByTagNameNS(self::NS_PACKAGE_REL, 'Relationship') ?? [] as $relationship) {
+            if (null === $type || str_ends_with($relationship->getAttribute('Type'), $type)) {
                 $targets[$relationship->getAttribute('Id')] = $relationship->getAttribute('Target');
             }
         }
 
         return $targets;
+    }
+
+    /**
+     * @return array<string, string> the URL of each external link of a notes page, by id of relationship
+     */
+    private function hyperlinks(\ZipArchive $zip, string $notesPath): array
+    {
+        return $this->targets($this->load($zip, dirname($notesPath) . '/_rels/' . basename($notesPath) . '.rels'), '/hyperlink');
     }
 
     /**

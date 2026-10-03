@@ -104,6 +104,6 @@ final class NotesReaderTest extends TestCase
             'ppt/notesSlides/notesSlide1.xml' => '<!DOCTYPE n [<!ENTITY x SYSTEM "file://' . $secret . '">]><notes>&x;</notes>',
         ]));
 
-        self::assertStringNotContainsString('TOP-SECRET', $notes[1]->saveXML() ?: '');
+        self::assertStringNotContainsString('TOP-SECRET', $notes[1]->document->saveXML() ?: '');
     }
 }
