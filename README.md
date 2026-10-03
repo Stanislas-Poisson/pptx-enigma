@@ -2,7 +2,7 @@
 
 PPTX-Enigma extracts the voice-over texts written in the speaker notes of a PowerPoint (`.pptx`) file. The texts are grouped by speaker and by reference, and the formatting of the notes (bold, italic, underline, strikethrough, superscript, subscript, line breaks, links, lists) is converted to HTML or to plain text.
 
-> **Status: proof of concept.** The extractor was rewritten, tested and given a configuration and a command line ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3), [#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)). It is not published as a package yet, and it has not been checked on real PowerPoint exports. See [Known limits](#known-limits).
+> **Status: stable, `1.0.0`.** The extractor was rewritten, tested and given a configuration and a command line ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3), [#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)). It is published as a Composer package. It has been tested on generated presentations only, not on real PowerPoint exports. See [Known limits](#known-limits).
 
 ## Requirements
 
@@ -21,7 +21,11 @@ A speaker can have several voice-overs in the same notes. By default a reference
 
 ## Installation
 
-PPTX-Enigma is not published on Packagist yet: there is no release. When it is, it will be installed with `composer require stanislas-poisson/pptx-enigma`. Until then, add the repository to your `composer.json`.
+Install it with Composer:
+
+```bash
+composer require stanislas-poisson/pptx-enigma
+```
 
 ## Usage
 
@@ -149,7 +153,7 @@ make quality   # Pint, PHPStan, Rector, PHP Insights and PHPUnit
 
 1. Fix the known bugs and clean the application ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3)): done.
 2. Add the missing features ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)): done.
-3. Turn PPTX-Enigma into a Composer package with a configuration ([#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)): the configuration is done, the release and the publication on Packagist are not.
+3. Turn PPTX-Enigma into a Composer package with a configuration ([#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)): done, released as `1.0.0`.
 
 ## License
 
