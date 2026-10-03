@@ -138,9 +138,12 @@ The text is escaped in the HTML. A paragraph is a list item only when it has a b
 ## Development
 
 ```sh
-composer install
-composer check   # PHPStan at the maximum level, then PHPUnit
+make install
+make hooks     # the Git hooks
+make quality   # Pint, PHPStan, Rector, PHP Insights and PHPUnit
 ```
+
+`make help` lists every command. See [CONTRIBUTING.md](CONTRIBUTING.md) for the details.
 
 ## Roadmap
 
