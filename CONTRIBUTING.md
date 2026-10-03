@@ -26,7 +26,7 @@ The Composer scripts are the source of truth, and the `Makefile` is a short way 
 | Command | Tool | Description |
 | :--- | :--- | :--- |
 | `make install` | Composer | Install the development tools. |
-| `make hooks` | Git | Activate the hooks of `.githooks`: the commit message, `quality-fast` before a commit, `quality` before a push. |
+| `make hooks` | Git | Activate the hooks of php-dev-tools: the commit message, `quality:fast` before a commit, `quality` before a push. |
 | `make cs` | Pint | Check the code style. `make cs-fix` fixes it. |
 | `make analyse` | PHPStan | Static analysis at the maximum level with the strict rules, without a baseline. |
 | `make rector` | Rector | Check what Rector would change. `make rector-fix` applies it. |
@@ -37,7 +37,7 @@ The Composer scripts are the source of truth, and the `Makefile` is a short way 
 
 The tests build their presentations on the fly (`tests/PptxBuilder.php`) and use `examples/sample.pptx`, which is fictional. Never add a file with a private or confidential content.
 
-The configurations are copied from `zairakai/laravel-dev-tools`, without the Laravel parts. No file is excluded to hide an error: the exclusions of `phpinsights.php` only remove the rules that contradict Pint.
+The rules come from [php-dev-tools](https://github.com/Stanislas-Poisson/php-dev-tools), which the files of this repository extend: `pint.json`, `phpstan.neon.dist`, `rector.php`, `phpinsights.php` and `.markdownlint.json` only hold what is specific to PPTX-Enigma. The package is read from its GitHub repository until it is on Packagist. No file is excluded to hide an error.
 
 The `ci` check runs the same commands on PHP 8.3 and 8.4, and must pass before a change reaches `develop` or `main`.
 
