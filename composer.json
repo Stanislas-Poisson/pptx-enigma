@@ -45,8 +45,13 @@
         "ext-zip": "*"
     },
     "require-dev": {
+        "laravel/pint": "^1.32",
+        "nunomaduro/phpinsights": "^2.14",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
-        "phpstan/phpstan": "^2.1"
+        "rector/rector": "^2.6"
     },
     "autoload": {
         "psr-4": {
@@ -62,8 +67,15 @@
         "bin/pptx-enigma"
     ],
     "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
         "optimize-autoloader": true,
+        "platform": {
+            "php": "8.3.0"
+        },
         "preferred-install": "dist",
+        "process-timeout": 0,
         "sort-packages": true
     },
     "minimum-stability": "stable",
@@ -88,11 +100,29 @@
         ]
     },
     "scripts": {
-        "test": "phpunit",
-        "stan": "phpstan analyse --memory-limit=512M",
-        "check": [
-            "@stan",
+        "analyse": "phpstan analyse --memory-limit=1G --no-progress",
+        "cs": "pint --test",
+        "cs:fix": "pint",
+        "insights": "phpinsights analyse --no-interaction --config-path=phpinsights.php",
+        "markdown": "npx --yes markdownlint-cli2 \"**/*.md\" \"#vendor\" \"#build\" \"#node_modules\"",
+        "quality": [
+            "@cs",
+            "@analyse",
+            "@rector",
+            "@insights",
             "@test"
-        ]
+        ],
+        "quality:fast": [
+            "@cs",
+            "@analyse"
+        ],
+        "quality:fix": [
+            "@rector:fix",
+            "@cs:fix"
+        ],
+        "rector": "rector process --dry-run --no-progress-bar",
+        "rector:fix": "rector process --no-progress-bar",
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text"
     }
 }
