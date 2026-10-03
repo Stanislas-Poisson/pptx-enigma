@@ -9,7 +9,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - The line breaks and the hyperlinks of the notes, and an error for a voice-over that is not closed ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)).
 - The `Options` object (the sign, the duplicates, the HTML tags, the link schemes), the `VoiceOvers` result with the HTML, plain text, JSON and array formats, and the `bin/pptx-enigma` command ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)).
 
-- The quality tools of the other zairakai projects: Pint, PHPStan with the strict rules, Rector, PHP Insights at 100 %, markdownlint, a `Makefile` and Git hooks ([#16](https://github.com/Stanislas-Poisson/pptx-enigma/issues/16)).
+- The quality tools of the other zairakai projects: Pint, PHPStan with the strict rules, Rector, PHP Insights at 100 %, markdownlint, a `Makefile` and Git hooks ([#16](https://github.com/Stanislas-Poisson/pptx-enigma/issues/16)), now taken from php-dev-tools instead of a copy ([#18](https://github.com/Stanislas-Poisson/pptx-enigma/issues/18)).
 
 ### Changed
 
