@@ -1,15 +1,7 @@
 includes:
-    - vendor/phpstan/phpstan-phpunit/extension.neon
-    - vendor/phpstan/phpstan-phpunit/rules.neon
-    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/stanislas-poisson/php-dev-tools/config/phpstan.neon
 
 parameters:
-    level: max
     paths:
         - src
         - tests
-    tmpDir: build/phpstan
-    checkMissingCallableSignature: true
-    checkTooWideReturnTypesInProtectedAndPublicMethods: true
-    checkUninitializedProperties: true
-    reportUnmatchedIgnoredErrors: true
