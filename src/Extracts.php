@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace PPTXenigma;
 
 /**
- * Extracts the voice-over texts written in the notes of a presentation,
- * grouped by speaker and by reference.
+ * Extracts the voice-over texts written in the notes of a presentation.
  *
  * In a note, a voice-over starts with a line that begins with the sign, then
  * the speaker between parentheses, then the reference. It ends at the next
@@ -16,126 +15,127 @@ namespace PPTXenigma;
  *     The text of the voice-over.
  *     ¤ VOICE OVER END
  */
-final class Extracts
+final readonly class Extracts
 {
     private const NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
     private const NS_PRESENTATION = 'http://schemas.openxmlformats.org/presentationml/2006/main';
 
-    private ?string $sign = null;
-
-    private bool $signIsSet = false;
-
-    /**
-     * @var array<string, array<string, string>>
-     */
-    private array $voiceOvers = [];
-
-    public function __construct(private readonly string $path)
-    {
+    public function __construct(
+        private string $path,
+        private Options $options = new Options(),
+    ) {
     }
 
     /**
-     * Sets the sign instead of reading it in the first notes.
-     */
-    public function setSign(string $sign): self
-    {
-        $this->sign = $sign;
-        $this->signIsSet = '' !== $sign;
-
-        return $this;
-    }
-
-    public function getSign(): ?string
-    {
-        return $this->sign;
-    }
-
-    /**
-     * Without a sign set before, the sign is the text of the first notes of the
+     * Without a sign in the options, the sign is the text of the first notes of the
      * presentation, which are not searched for voice-overs.
      *
      * @throws \InvalidArgumentException when the file is not a PowerPoint 2007+ presentation
-     * @throws ExtractionException       when the sign cannot be found, a reference is used twice or a voice-over is not closed
+     * @throws ExtractionException       when the sign cannot be found, a reference is used twice (unless the
+     *                                   options keep one of them) or a voice-over is not closed
      */
-    public function extract(): self
+    public function extract(): VoiceOvers
     {
         $notes = (new NotesReader())->read($this->path);
-        $this->voiceOvers = [];
         $firstSlide = null;
+        $sign = $this->options->sign;
 
-        if ($this->signIsSet) {
-            $sign = $this->sign ?? '';
-        } else {
+        if (null === $sign) {
             $firstSlide = array_key_first($notes);
-            $sign = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]->document);
-            $this->sign = '' === $sign ? null : $sign;
+            $sign = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]);
         }
 
         if ('' === $sign) {
             throw new ExtractionException('No sign found: the first notes are empty.');
         }
 
+        /** @var array<string, array<string, VoiceOver>> $found */
+        $found = [];
+
         foreach ($notes as $slide => $page) {
-            if ($slide !== $firstSlide) {
-                $this->collect($page, $slide, $sign);
+            if ($slide === $firstSlide) {
+                continue;
+            }
+
+            foreach ($this->collect($page, $slide, $sign) as $voiceOver) {
+                $found = $this->add($found, $voiceOver);
             }
         }
 
-        return $this;
+        ksort($found, SORT_STRING);
+        $voiceOvers = [];
+
+        foreach ($found as $references) {
+            foreach ($references as $voiceOver) {
+                $voiceOvers[] = $voiceOver;
+            }
+        }
+
+        return new VoiceOvers($sign, $voiceOvers);
     }
 
     /**
-     * @return array<string, array<string, string>> the HTML of each voice-over, by speaker then by reference, sorted by speaker
+     * @param array<string, array<string, VoiceOver>> $found
+     *
+     * @return array<string, array<string, VoiceOver>>
      */
-    public function getVoiceOver(): array
+    private function add(array $found, VoiceOver $voiceOver): array
     {
-        $voiceOvers = $this->voiceOvers;
-        ksort($voiceOvers, SORT_STRING);
+        if (isset($found[$voiceOver->speaker][$voiceOver->reference])) {
+            if (Duplicates::Error === $this->options->duplicates) {
+                throw new ExtractionException(sprintf('The reference "%s" of the voice-over "%s" on slide %d is already used.', $voiceOver->reference, $voiceOver->speaker, $voiceOver->slide));
+            }
 
-        return $voiceOvers;
+            if (Duplicates::KeepFirst === $this->options->duplicates) {
+                return $found;
+            }
+        }
+
+        $found[$voiceOver->speaker][$voiceOver->reference] = $voiceOver;
+
+        return $found;
     }
 
-    private function readSign(\DOMDocument $notes): string
+    private function readSign(Notes $notes): string
     {
-        $converter = new ParagraphConverter();
-
         foreach ($this->paragraphs($notes) as $paragraph) {
-            $text = $converter->trimmedText($paragraph);
-
-            if ('' !== $text) {
-                return $text;
+            if (!$paragraph->isBlank()) {
+                return $paragraph->trimmedText();
             }
         }
 
         return '';
     }
 
-    private function collect(Notes $notes, int $slide, string $sign): void
+    /**
+     * @return list<VoiceOver>
+     */
+    private function collect(Notes $notes, int $slide, string $sign): array
     {
-        $converter = new ParagraphConverter($notes->hyperlinks);
+        $html = new HtmlRenderer($this->options);
+        $text = new TextRenderer($this->options);
         $opening = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
+        $voiceOvers = [];
         $speaker = null;
         $reference = '';
-        /** @var list<\DOMElement> $content */
+        /** @var list<Paragraph> $content */
         $content = [];
 
-        foreach ($this->paragraphs($notes->document) as $paragraph) {
-            $text = $converter->trimmedText($paragraph);
-
-            if (!str_starts_with($text, $sign)) {
+        foreach ($this->paragraphs($notes) as $paragraph) {
+            if (!str_starts_with($paragraph->trimmedText(), $sign)) {
                 $content[] = $paragraph;
 
                 continue;
             }
 
             if (null !== $speaker) {
-                $this->store($speaker, $reference, $converter->convert($content), $slide);
+                $voiceOvers[] = new VoiceOver($speaker, $reference, $slide, $html->render($content), $text->render($content));
             }
 
             $speaker = null;
             $content = [];
 
-            if (1 === preg_match($opening, $text, $marker)) {
+            if (1 === preg_match($opening, $paragraph->trimmedText(), $marker)) {
                 $speaker = trim($marker[1]);
                 $reference = trim($marker[2]);
             }
@@ -144,32 +144,26 @@ final class Extracts
         if (null !== $speaker) {
             throw new ExtractionException(sprintf('The voice-over "%s" of the reference "%s" on slide %d is not closed.', $speaker, $reference, $slide));
         }
-    }
 
-    private function store(string $speaker, string $reference, string $html, int $slide): void
-    {
-        if (isset($this->voiceOvers[$speaker][$reference])) {
-            throw new ExtractionException(sprintf('The reference "%s" of the voice-over "%s" on slide %d is already used.', $reference, $speaker, $slide));
-        }
-
-        $this->voiceOvers[$speaker][$reference] = $html;
+        return $voiceOvers;
     }
 
     /**
      * The paragraphs of the text of the notes, which is the "body" placeholder of the page.
      *
-     * @return list<\DOMElement>
+     * @return list<Paragraph>
      */
-    private function paragraphs(\DOMDocument $notes): array
+    private function paragraphs(Notes $notes): array
     {
-        $xpath = new \DOMXPath($notes);
+        $xpath = new \DOMXPath($notes->document);
         $xpath->registerNamespace('p', self::NS_PRESENTATION);
         $xpath->registerNamespace('a', self::NS_DRAWING);
+        $reader = new ParagraphReader($notes->hyperlinks);
         $paragraphs = [];
 
         foreach ($xpath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p') ?: [] as $paragraph) {
             if ($paragraph instanceof \DOMElement) {
-                $paragraphs[] = $paragraph;
+                $paragraphs[] = $reader->read($paragraph);
             }
         }
 
