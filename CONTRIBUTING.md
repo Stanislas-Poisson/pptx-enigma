@@ -37,7 +37,7 @@ The Composer scripts are the source of truth, and the `Makefile` is a short way 
 
 The tests build their presentations on the fly (`tests/PptxBuilder.php`) and use `examples/sample.pptx`, which is fictional. Never add a file with a private or confidential content.
 
-The rules come from [php-dev-tools](https://github.com/Stanislas-Poisson/php-dev-tools), which the files of this repository extend: `pint.json`, `phpstan.neon.dist`, `rector.php`, `phpinsights.php` and `.markdownlint.json` only hold what is specific to PPTX-Enigma. The package is read from its GitHub repository until it is on Packagist. No file is excluded to hide an error.
+The rules come from [php-dev-tools](https://github.com/Stanislas-Poisson/php-dev-tools), which the files of this repository extend: `pint.json`, `phpstan.neon.dist`, `rector.php`, `phpinsights.php` and `.markdownlint.json` only hold what is specific to PPTX-Enigma. No file is excluded to hide an error.
 
 The `ci` check runs the same commands on PHP 8.3 and 8.4, and must pass before a change reaches `develop` or `main`.
 
