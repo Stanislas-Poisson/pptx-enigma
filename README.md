@@ -62,7 +62,7 @@ The speakers are sorted by name, and the references keep the order of the slides
 | `extract()` | Read the notes. Returns the extractor. |
 | `getVoiceOver()` | The HTML of each voice-over, by speaker then by reference. |
 
-A file that is missing or is not a PowerPoint 2007+ presentation throws an `InvalidArgumentException`. A missing sign, or a reference used twice by the same speaker, throws a `PPTXenigma\ExtractionException` with the number of the slide.
+A file that is missing or is not a PowerPoint 2007+ presentation throws an `InvalidArgumentException`. A missing sign, a reference used twice by the same speaker, or a voice-over that is not closed, throws a `PPTXenigma\ExtractionException` that names the speaker, the reference and the number of the slide.
 
 ### HTML
 
@@ -71,6 +71,8 @@ A file that is missing or is not a PowerPoint 2007+ presentation throws an `Inva
 | A paragraph | `<p>…</p>` |
 | Bold, italic, underline, strikethrough | `<b>`, `<i>`, `<u>`, `<s>` |
 | Superscript, subscript | `<sup>`, `<sub>` |
+| A line break inside a paragraph | `<br>` |
+| A hyperlink | `<a href="…">`, for the schemes `http`, `https`, `mailto` and `tel` only |
 | A bulleted or a numbered paragraph | `<ul>` or `<ol>` with `<li>`, nested by level |
 | An empty paragraph | nothing, it only ends a list |
 
@@ -78,10 +80,10 @@ The text is escaped. A paragraph is a list item only when it has a bullet (`buCh
 
 ## Known limits
 
-- **A voice-over that is not closed** (no line with the sign after it, and no next voice-over) is ignored without an error ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)).
-- **Line breaks inside a paragraph, hyperlinks and the other styles** of PowerPoint are not converted ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)).
 - **There is only one output format** (a PHP array of HTML), and nothing can be configured except the sign ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)).
+- **The markers are the ones above**: a sign followed by the speaker in parentheses. They cannot be changed yet.
 - **The size of the archive is not limited**: do not use it on files you do not trust.
+- A hyperlink with another scheme is written as plain text, and the other formatting of PowerPoint (colours, sizes, fonts) is dropped.
 
 ## Development
 
