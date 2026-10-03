@@ -6,7 +6,11 @@ namespace PPTXenigma\Tests;
 
 use PHPUnit\Framework\TestCase;
 use PPTXenigma\ExtractionException;
+use PPTXenigma\Duplicates;
 use PPTXenigma\Extracts;
+use PPTXenigma\Format;
+use PPTXenigma\Options;
+use PPTXenigma\VoiceOvers;
 
 final class ExtractsTest extends TestCase
 {
@@ -23,17 +27,12 @@ final class ExtractsTest extends TestCase
     /**
      * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides
      */
-    private function extract(array $slides, ?string $sign = null): Extracts
+    private function extract(array $slides, ?Options $options = null): VoiceOvers
     {
         $path = PptxBuilder::build($slides);
         $this->files[] = $path;
-        $extractor = new Extracts($path);
 
-        if (null !== $sign) {
-            $extractor->setSign($sign);
-        }
-
-        return $extractor->extract();
+        return (new Extracts($path, $options ?? new Options()))->extract();
     }
 
     /**
@@ -48,7 +47,9 @@ final class ExtractsTest extends TestCase
     {
         $extractor = (new Extracts(__DIR__ . '/../examples/sample.pptx'))->extract();
 
-        self::assertSame('¤', $extractor->getSign());
+        self::assertCount(4, $extractor);
+
+        self::assertSame('¤', $extractor->sign);
         self::assertSame([
             'Guide' => [
                 'w02_guide' => '<p>Hello, I am the guide.</p>',
@@ -58,7 +59,7 @@ final class ExtractsTest extends TestCase
                 'w01_intro' => '<p>Welcome to this </p><p><b>fictional</b> presentation, written only to test the extractor.</p><p>It has <i>two</i> voices.</p>',
                 'w02_list' => '<p>Three things to remember:</p><ul><li>Notes are read slide by slide.</li><li>Voices are grouped by speaker.</li><li>References identify each voice-over.</li></ul>',
             ],
-        ], $extractor->getVoiceOver());
+        ], $extractor->toArray());
     }
 
     public function testReadsTheSlidesInTheOrderOfThePresentation(): void
@@ -71,7 +72,7 @@ final class ExtractsTest extends TestCase
             self::slide(1, '¤ VOICE (Speaker) third', 'C', '¤ END'),
         ]);
 
-        self::assertSame(['first', 'second', 'third'], array_keys($extractor->getVoiceOver()['Speaker']));
+        self::assertSame(['first', 'second', 'third'], array_keys($extractor->toArray()['Speaker']));
     }
 
     public function testKeepsTheFirstParagraphOfAVoiceOver(): void
@@ -81,7 +82,7 @@ final class ExtractsTest extends TestCase
             self::slide(2, '¤ VOICE (Speaker) ref', 'First', 'Second', '¤ END'),
         ]);
 
-        self::assertSame(['Speaker' => ['ref' => '<p>First</p><p>Second</p>']], $extractor->getVoiceOver());
+        self::assertSame(['Speaker' => ['ref' => '<p>First</p><p>Second</p>']], $extractor->toArray());
     }
 
     public function testReadsSeveralVoiceOversInTheSameNotesWithoutAClosingLine(): void
@@ -91,7 +92,7 @@ final class ExtractsTest extends TestCase
             self::slide(2, '¤ VOICE (B) one', 'x', '¤ VOICE (A) two', 'y', '¤ END', 'ignored', '¤ VOICE (B) three', 'z', '¤'),
         ]);
 
-        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $extractor->getVoiceOver());
+        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $extractor->toArray());
     }
 
     public function testRejectsAVoiceOverThatIsNotClosed(): void
@@ -118,7 +119,7 @@ final class ExtractsTest extends TestCase
             ]],
         ]);
 
-        self::assertSame('<p>one<br>two</p>', $extractor->getVoiceOver()['S']['breaks']);
+        self::assertSame('<p>one<br>two</p>', $extractor->toArray()['S']['breaks']);
     }
 
     public function testConvertsTheHyperlinks(): void
@@ -151,7 +152,7 @@ final class ExtractsTest extends TestCase
 
         self::assertSame(
             '<p>See <a href="https://example.com/?a=1&amp;b=&quot;2&quot;"><b>the site</b></a> or <a href="mailto:me@example.com">mail</a> or script or unknown</p>',
-            $extractor->getVoiceOver()['S']['links'],
+            $extractor->toArray()['S']['links'],
         );
     }
 
@@ -162,15 +163,15 @@ final class ExtractsTest extends TestCase
             self::slide(2, '¤  VOICE OVER  ( The Guide )   ref 1  ', 'x', '¤'),
         ]);
 
-        self::assertSame(['The Guide' => ['ref 1' => '<p>x</p>']], $extractor->getVoiceOver());
+        self::assertSame(['The Guide' => ['ref 1' => '<p>x</p>']], $extractor->toArray());
     }
 
     public function testIgnoresTheNumberOfTheSlideAndTheOtherPlaceholders(): void
     {
         $extractor = $this->extract([self::slide(1, '¤'), self::slide(2, '¤ V (S) r', 'x', '¤')]);
 
-        self::assertSame('¤', $extractor->getSign());
-        self::assertStringNotContainsString('‹', json_encode($extractor->getVoiceOver(), JSON_THROW_ON_ERROR));
+        self::assertSame('¤', $extractor->sign);
+        self::assertStringNotContainsString('‹', json_encode($extractor->toArray(), JSON_THROW_ON_ERROR));
     }
 
     public function testConvertsTheLists(): void
@@ -201,7 +202,7 @@ final class ExtractsTest extends TestCase
             . '<p>not a list</p>'
             . '<ol><li>1<ol><li>2<ol><li>3</li></ol></li></ol></li><li>4</li></ol>'
             . '<ol><li>5</li></ol>',
-            $extractor->getVoiceOver()['S']['lists'],
+            $extractor->toArray()['S']['lists'],
         );
     }
 
@@ -230,7 +231,7 @@ final class ExtractsTest extends TestCase
 
         self::assertSame(
             '<p><b>bold</b> <b><i><u><s>all</s></u></i></b> off <sup>sup</sup><sub>sub</sub>flat</p><p>a &lt; b &amp; c &gt; d</p>',
-            $extractor->getVoiceOver()['S']['styles'],
+            $extractor->toArray()['S']['styles'],
         );
     }
 
@@ -241,7 +242,7 @@ final class ExtractsTest extends TestCase
             self::slide(2, '¤ V (b) r', 'x', '¤ V (B) r', 'x', '¤ V (a) r', 'x', '¤'),
         ]);
 
-        self::assertSame(['B', 'a', 'b'], array_keys($extractor->getVoiceOver()));
+        self::assertSame(['B', 'a', 'b'], array_keys($extractor->toArray()));
     }
 
     public function testRejectsAReferenceUsedTwiceForTheSameSpeaker(): void
@@ -265,17 +266,17 @@ final class ExtractsTest extends TestCase
             self::slide(2, '¤ V (A) ref', 'x', '¤ V (B) ref', 'y', '¤'),
         ]);
 
-        self::assertSame(['A' => ['ref' => '<p>x</p>'], 'B' => ['ref' => '<p>y</p>']], $extractor->getVoiceOver());
+        self::assertSame(['A' => ['ref' => '<p>x</p>'], 'B' => ['ref' => '<p>y</p>']], $extractor->toArray());
     }
 
     public function testUsesTheSignThatIsSetAndSearchesTheFirstNotes(): void
     {
         $extractor = $this->extract([
             self::slide(1, '§ V (S) one', 'x', '§', '¤ V (S) other', 'y', '¤'),
-        ], '§');
+        ], new Options(sign: '§'));
 
-        self::assertSame('§', $extractor->getSign());
-        self::assertSame(['S' => ['one' => '<p>x</p>']], $extractor->getVoiceOver());
+        self::assertSame('§', $extractor->sign);
+        self::assertSame(['S' => ['one' => '<p>x</p>']], $extractor->toArray());
     }
 
     public function testEmptyNotesHaveNoSign(): void
@@ -293,23 +294,13 @@ final class ExtractsTest extends TestCase
         $this->extract([['file' => 1, 'notes' => null]]);
     }
 
-    public function testAnEmptySignResetsTheDetection(): void
-    {
-        $path = PptxBuilder::build([self::slide(1, '¤'), self::slide(2, '¤ V (S) r', 'x', '¤')]);
-        $this->files[] = $path;
-
-        $extractor = (new Extracts($path))->setSign('')->extract();
-
-        self::assertSame('¤', $extractor->getSign());
-    }
-
     public function testExtractsAgain(): void
     {
         $path = PptxBuilder::build([self::slide(1, '¤'), self::slide(2, '¤ V (S) r', 'x', '¤')]);
         $this->files[] = $path;
         $extractor = new Extracts($path);
 
-        self::assertSame($extractor->extract()->getVoiceOver(), $extractor->extract()->getVoiceOver());
+        self::assertSame($extractor->extract()->toArray(), $extractor->extract()->toArray());
     }
 
     public function testLeavesNoFileBehind(): void
@@ -319,9 +310,84 @@ final class ExtractsTest extends TestCase
         $this->files[] = $path;
         $during = glob(sys_get_temp_dir() . '/*') ?: [];
 
-        (new Extracts($path))->setSign('¤')->extract();
+        (new Extracts($path, new Options(sign: '¤')))->extract();
 
         self::assertSame($during, glob(sys_get_temp_dir() . '/*') ?: []);
         self::assertCount(count($before) + 1, $during);
+    }
+
+    public function testKeepsTheFirstOrTheLastOfTwoVoiceOversWithTheSameReference(): void
+    {
+        $slides = [
+            self::slide(1, '¤'),
+            self::slide(2, '¤ V (S) ref', 'first', '¤', '¤ V (S) other', 'x', '¤'),
+            self::slide(3, '¤ V (S) ref', 'last', '¤'),
+        ];
+
+        self::assertSame(
+            ['ref' => '<p>first</p>', 'other' => '<p>x</p>'],
+            $this->extract($slides, new Options(duplicates: Duplicates::KeepFirst))->toArray()['S'],
+        );
+        self::assertSame(
+            ['ref' => '<p>last</p>', 'other' => '<p>x</p>'],
+            $this->extract($slides, new Options(duplicates: Duplicates::KeepLast))->toArray()['S'],
+        );
+    }
+
+    public function testHtmlTagsCanBeChanged(): void
+    {
+        $voiceOvers = $this->extract([
+            self::slide(1, '¤'),
+            ['file' => 2, 'notes' => [
+                '¤ V (S) ref',
+                ['runs' => [['t' => 'a', 'b' => '1'], ['t' => 'b', 'i' => '1', 'baseline' => 10], ['t' => 'c', 'u' => 'sng']]],
+                '¤',
+            ]],
+        ], new Options(htmlTags: ['bold' => 'strong', 'italic' => 'em', 'superscript' => 'span']));
+
+        self::assertSame('<p><strong>a</strong><em><span>b</span></em><u>c</u></p>', $voiceOvers->toArray()['S']['ref']);
+    }
+
+    public function testLinkSchemesCanBeChanged(): void
+    {
+        $voiceOvers = $this->extract([
+            self::slide(1, '¤'),
+            [
+                'file' => 2,
+                'notes' => ['¤ V (S) ref', ['runs' => [['t' => 'web', 'link' => 'rId1'], ' ', ['t' => 'mail', 'link' => 'rId2']]], '¤'],
+                'links' => ['rId1' => 'https://example.com', 'rId2' => 'mailto:me@example.com'],
+            ],
+        ], new Options(linkSchemes: ['https']));
+
+        self::assertSame('<p><a href="https://example.com">web</a> mail</p>', $voiceOvers->toArray()['S']['ref']);
+    }
+
+    public function testWritesPlainText(): void
+    {
+        $voiceOvers = $this->extract([
+            self::slide(1, '¤'),
+            [
+                'file' => 2,
+                'notes' => [
+                    '¤ V (S) text',
+                    'Intro line',
+                    ['runs' => [['t' => 'one', 'b' => '1'], ['br' => true], 'two']],
+                    ['runs' => ['A'], 'bullet' => 'ol'],
+                    ['runs' => ['B'], 'bullet' => 'ol'],
+                    ['runs' => ['x', ['br' => true], 'y'], 'bullet' => 'ul', 'lvl' => 1],
+                    ['runs' => ['C'], 'bullet' => 'ol'],
+                    ['runs' => [' ']],
+                    ['runs' => ['D'], 'bullet' => 'ol'],
+                    ['runs' => ['See ', ['t' => 'the site', 'link' => 'rId1'], ' and ', ['t' => 'https://example.com', 'link' => 'rId1'], ' and ', ['t' => 'bad', 'link' => 'rId2']]],
+                    '¤',
+                ],
+                'links' => ['rId1' => 'https://example.com', 'rId2' => 'javascript:alert'],
+            ],
+        ]);
+
+        self::assertSame(
+            "Intro line\none\ntwo\n1. A\n2. B\n  - x\n    y\n3. C\n1. D\nSee the site (https://example.com) and https://example.com and bad",
+            $voiceOvers->toArray(Format::Text)['S']['text'],
+        );
     }
 }

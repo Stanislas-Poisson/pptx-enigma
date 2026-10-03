@@ -58,6 +58,9 @@
             "PPTXenigma\\Tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/pptx-enigma"
+    ],
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
