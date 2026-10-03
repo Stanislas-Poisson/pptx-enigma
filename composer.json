@@ -1,0 +1,36 @@
+{
+    "name": "stanislas-poisson/pptx-enigma",
+    "description": "Extracts the voice-over texts written in the speaker notes of a PowerPoint file, grouped by speaker and reference.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.3",
+        "ext-dom": "*",
+        "ext-zip": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "PPTXenigma\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PPTXenigma\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse --memory-limit=512M",
+        "check": [
+            "@stan",
+            "@test"
+        ]
+    }
+}
