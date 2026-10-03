@@ -1,0 +1,37 @@
+name: Bug report
+description: The tool gives a wrong result or fails.
+labels: [bug]
+body:
+  - type: textarea
+    id: notes
+    attributes:
+      label: Structure of the notes
+      description: The marker lines and the paragraphs of the notes that show the problem. Please do not attach a file with a private or confidential content.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result or error
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: php
+    attributes:
+      label: PHP version
+      description: For example 8.4.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Version or commit, operating system, and anything else that helps.
