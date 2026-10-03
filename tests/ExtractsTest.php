@@ -26,6 +26,13 @@ final class ExtractsTest extends TestCase
         }
     }
 
+    public function test_a_presentation_without_notes_has_no_sign(): void
+    {
+        $this->expectException(ExtractionException::class);
+
+        $this->extract([['file' => 1, 'notes' => null]]);
+    }
+
     public function test_accepts_the_same_reference_for_two_speakers(): void
     {
         $extractor = $this->extract([
@@ -34,13 +41,6 @@ final class ExtractsTest extends TestCase
         ]);
 
         self::assertSame(['A' => ['ref' => '<p>x</p>'], 'B' => ['ref' => '<p>y</p>']], $extractor->toArray());
-    }
-
-    public function test_a_presentation_without_notes_has_no_sign(): void
-    {
-        $this->expectException(ExtractionException::class);
-
-        $this->extract([['file' => 1, 'notes' => null]]);
     }
 
     public function test_converts_the_hyperlinks(): void
@@ -241,14 +241,14 @@ final class ExtractsTest extends TestCase
 
     public function test_leaves_no_file_behind(): void
     {
-        $before        = glob(sys_get_temp_dir() . '/*') ?: [];
+        $before        = self::temporaryFiles();
         $path          = PptxBuilder::build([self::slide(1, '¤')]);
         $this->files[] = $path;
-        $during        = glob(sys_get_temp_dir() . '/*') ?: [];
+        $during        = self::temporaryFiles();
 
         (new Extracts($path, new Options(sign: '¤')))->extract();
 
-        self::assertSame($during, glob(sys_get_temp_dir() . '/*') ?: []);
+        self::assertSame($during, self::temporaryFiles());
         self::assertCount(count($before) + 1, $during);
     }
 
@@ -380,6 +380,16 @@ final class ExtractsTest extends TestCase
     private static function slide(int $file, string ...$lines): array
     {
         return ['file' => $file, 'notes' => array_values($lines)];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function temporaryFiles(): array
+    {
+        $files = glob(sys_get_temp_dir() . '/*');
+
+        return false === $files ? [] : $files;
     }
 
     /**

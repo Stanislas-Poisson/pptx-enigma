@@ -155,7 +155,9 @@ final readonly class Extracts
         $reader     = new ParagraphReader($notes->hyperlinks);
         $paragraphs = [];
 
-        foreach ($xpath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p') ?: [] as $paragraph) {
+        $found = $xpath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p');
+
+        foreach (false === $found ? [] : $found as $paragraph) {
             if ($paragraph instanceof DOMElement) {
                 $paragraphs[] = $reader->read($paragraph);
             }

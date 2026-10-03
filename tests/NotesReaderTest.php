@@ -49,7 +49,7 @@ final class NotesReaderTest extends TestCase
             'ppt/notesSlides/notesSlide1.xml'  => '<!DOCTYPE n [<!ENTITY x SYSTEM "file://' . $secret . '">]><notes>&x;</notes>',
         ]));
 
-        self::assertStringNotContainsString('TOP-SECRET', $notes[1]->document->saveXML() ?: '');
+        self::assertStringNotContainsString('TOP-SECRET', (string) $notes[1]->document->saveXML());
     }
 
     public function test_rejects_a_file_that_is_not_an_archive(): void

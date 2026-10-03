@@ -86,7 +86,9 @@ final class NotesReader
         $xpath         = new DOMXPath($relationships ?? new DOMDocument());
         $xpath->registerNamespace('rel', self::NS_PACKAGE_REL);
 
-        foreach ($xpath->query('//rel:Relationship') ?: [] as $relationship) {
+        $found = $xpath->query('//rel:Relationship');
+
+        foreach (false === $found ? [] : $found as $relationship) {
             if ($relationship instanceof DOMElement && str_ends_with($relationship->getAttribute('Type'), '/notesSlide')) {
                 return $this->resolve(dirname($slidePath), $relationship->getAttribute('Target'));
             }
