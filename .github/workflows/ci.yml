@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   quality:
-    name: Static analysis
+    name: Code style and static analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -22,7 +22,17 @@ jobs:
           extensions: dom, zip
 
       - run: composer install --no-interaction --prefer-dist
-      - run: composer stan
+      - run: composer cs
+      - run: composer analyse
+      - run: composer rector
+      - run: composer insights
+
+  docs:
+    name: Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: npx --yes markdownlint-cli2 "**/*.md" "#vendor" "#build" "#node_modules"
 
   security:
     name: Dependencies audit
@@ -66,7 +76,7 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
-    needs: [quality, security, test]
+    needs: [quality, docs, security, test]
     if: always()
     steps:
       - name: Every job passed
