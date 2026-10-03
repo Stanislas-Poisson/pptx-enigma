@@ -35,7 +35,11 @@ final class OptionsTest extends TestCase
 
         self::assertNull($options->sign);
         self::assertSame(Duplicates::Error, $options->duplicates);
-        self::assertSame(Options::DEFAULT_HTML_TAGS, $options->htmlTags);
+
+        foreach (Options::DEFAULT_HTML_TAGS as $style => $tag) {
+            self::assertSame($tag, $options->htmlTag($style));
+        }
+
         self::assertSame(['http', 'https', 'mailto', 'tel'], $options->linkSchemes);
     }
 
@@ -53,9 +57,10 @@ final class OptionsTest extends TestCase
 
     public function test_tags_that_are_left_out_keep_their_default(): void
     {
-        $tags = (new Options(htmlTags: ['bold' => 'strong']))->htmlTags;
+        $options = new Options(htmlTags: ['bold' => 'strong']);
 
-        self::assertSame('strong', $tags['bold']);
-        self::assertSame('i', $tags['italic']);
+        self::assertSame('strong', $options->htmlTag('bold'));
+        self::assertSame('i', $options->htmlTag('italic'));
+        self::assertSame('', $options->htmlTag('unknown'));
     }
 }

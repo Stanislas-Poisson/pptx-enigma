@@ -16,63 +16,23 @@ final readonly class HtmlRenderer
      */
     public function render(array $paragraphs): string
     {
-        $html = '';
-
-        /** @var list<string> $open the tag of each opened list, from the outermost */
-        $open = [];
+        $html      = '';
+        $openLists = new OpenLists();
 
         foreach ($paragraphs as $paragraph) {
             $item = $paragraph->item;
 
             if ($paragraph->isBlank() || null === $item) {
-                $html .= $this->closeLists($open);
-                $open = [];
-
-                if (! $paragraph->isBlank()) {
-                    $html .= '<p>' . $this->inlines($paragraph) . '</p>';
-                }
+                $html .= $openLists->closeAll() . $this->paragraph($paragraph);
 
                 continue;
             }
 
-            $type  = ListType::Bullet === $item->type ? 'ul' : 'ol';
-            $level = min($item->level, count($open));
-
-            while (count($open) > $level + 1) {
-                $html .= '</li></' . array_pop($open) . '>';
-            }
-
-            if (count($open) === $level + 1) {
-                $html .= '</li>';
-
-                if ($open[$level] !== $type) {
-                    $html .= '</' . array_pop($open) . '><' . $type . '>';
-                    $open[] = $type;
-                }
-            }
-            else {
-                $html .= '<' . $type . '>';
-                $open[] = $type;
-            }
-
-            $html .= '<li>' . $this->inlines($paragraph);
+            $type = ListType::Bullet === $item->type ? 'ul' : 'ol';
+            $html .= $openLists->enter($item->level, $type) . '<li>' . $this->inlines($paragraph);
         }
 
-        return $html . $this->closeLists($open);
-    }
-
-    /**
-     * @param list<string> $open
-     */
-    private function closeLists(array $open): string
-    {
-        $html = '';
-
-        while ([] !== $open) {
-            $html .= '</li></' . array_pop($open) . '>';
-        }
-
-        return $html;
+        return $html . $openLists->closeAll();
     }
 
     private function inline(Inline $inline): string
@@ -88,11 +48,10 @@ final readonly class HtmlRenderer
             'subscript'   => 0 > $inline->baseline,
         ];
 
-        foreach ($styles as $style => $applies) {
-            if ($applies) {
-                $begin .= '<' . $this->options->htmlTags[$style] . '>';
-                $end = '</' . $this->options->htmlTags[$style] . '>' . $end;
-            }
+        foreach (array_keys(array_filter($styles)) as $style) {
+            $tag = $this->options->htmlTag($style);
+            $begin .= '<' . $tag . '>';
+            $end = '</' . $tag . '>' . $end;
         }
 
         $url = Links::safeUrl($inline->url, $this->options);
@@ -114,5 +73,10 @@ final readonly class HtmlRenderer
         }
 
         return $html;
+    }
+
+    private function paragraph(Paragraph $paragraph): string
+    {
+        return $paragraph->isBlank() ? '' : '<p>' . $this->inlines($paragraph) . '</p>';
     }
 }

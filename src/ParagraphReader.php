@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PPTXenigma;
 
 use DOMElement;
+use DOMNode;
 
 /**
  * Reads a paragraph of a note: the style of each run, the line breaks, the links and the list item.
@@ -25,19 +26,27 @@ final readonly class ParagraphReader
         $inlines = [];
 
         foreach ($domElement->childNodes as $child) {
-            if (! $child instanceof DOMElement || self::NS_DRAWING !== $child->namespaceURI) {
-                continue;
-            }
+            $inline = $this->inline($child);
 
-            if ('br' === $child->localName) {
-                $inlines[] = new Inline(lineBreak: true);
-            }
-            elseif ('r' === $child->localName) {
-                $inlines[] = $this->run($child);
+            if ($inline instanceof Inline) {
+                $inlines[] = $inline;
             }
         }
 
         return new Paragraph($inlines, $this->listItem($domElement));
+    }
+
+    private function inline(DOMNode $domNode): ?Inline
+    {
+        if (! $domNode instanceof DOMElement || self::NS_DRAWING !== $domNode->namespaceURI) {
+            return null;
+        }
+
+        if ('br' === $domNode->localName) {
+            return new Inline(lineBreak: true);
+        }
+
+        return 'r' === $domNode->localName ? $this->run($domNode) : null;
     }
 
     private function isStyled(string $value): bool
@@ -56,22 +65,22 @@ final readonly class ParagraphReader
             return null;
         }
 
-        $type = null;
+        $type = $this->listType($properties);
 
-        foreach ($properties->childNodes as $child) {
-            if ('buNone' === $child->localName) {
-                return null;
-            }
+        return $type instanceof ListType ? new ListItem(max(0, (int) $properties->getAttribute('lvl')), $type) : null;
+    }
 
-            if ('buChar' === $child->localName) {
-                $type = ListType::Bullet;
-            }
-            elseif ('buAutoNum' === $child->localName) {
-                $type = ListType::Number;
-            }
+    private function listType(DOMElement $domElement): ?ListType
+    {
+        if (0 !== $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'buNone')->length) {
+            return null;
         }
 
-        return null === $type ? null : new ListItem(max(0, (int) $properties->getAttribute('lvl')), $type);
+        if (0 !== $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'buAutoNum')->length) {
+            return ListType::Number;
+        }
+
+        return 0 !== $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'buChar')->length ? ListType::Bullet : null;
     }
 
     private function run(DOMElement $domElement): Inline
@@ -97,6 +106,10 @@ final readonly class ParagraphReader
     {
         $link = $domElement->getElementsByTagNameNS(self::NS_DRAWING, 'hlinkClick')->item(0);
 
-        return $link instanceof DOMElement ? ($this->hyperlinks[$link->getAttributeNS(self::NS_RELATIONSHIPS, 'id')] ?? null) : null;
+        if (! $link instanceof DOMElement) {
+            return null;
+        }
+
+        return $this->hyperlinks[$link->getAttributeNS(self::NS_RELATIONSHIPS, 'id')] ?? null;
     }
 }

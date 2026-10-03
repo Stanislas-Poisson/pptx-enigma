@@ -28,16 +28,16 @@ final readonly class Options
     /**
      * @var array<string, string> the HTML tag of each style, with the default ones for the styles that are left out
      */
-    public array $htmlTags;
+    private array $tags;
 
     /**
-     * @param string|null           $sign        the sign that delimits the voice-overs; without it, the sign is the text
-     *                                           of the first notes, which are then not searched for voice-overs
+     * @param string|null           $sign        the sign that delimits the voice-overs; without it, the sign is the
+     *                                           text of the first notes, which are then not searched for voice-overs
      * @param Duplicates            $duplicates  what to do when a speaker uses the same reference twice
      * @param array<string, string> $htmlTags    the HTML tag of a style, by style: bold, italic, underline, strike,
      *                                           superscript and subscript
-     * @param list<string>          $linkSchemes the schemes of the links that are kept, in lowercase; the other links are
-     *                                           written as plain text
+     * @param list<string>          $linkSchemes the schemes of the links that are kept, in lowercase; the other links
+     *                                           are written as plain text
      *
      * @throws InvalidArgumentException when a setting is not valid
      */
@@ -47,26 +47,65 @@ final readonly class Options
         array $htmlTags = [],
         public array $linkSchemes = ['http', 'https', 'mailto', 'tel'],
     ) {
-        if (null !== $sign && 1 !== preg_match('/\S/u', $sign)) {
-            throw new InvalidArgumentException('The sign cannot be empty: leave it out to read it in the first notes.');
-        }
+        $this->assertSign($sign);
+        $this->assertHtmlTags($htmlTags);
+        $this->assertSchemes($linkSchemes);
 
+        $this->tags = [...self::DEFAULT_HTML_TAGS, ...$htmlTags];
+    }
+
+    /**
+     * The HTML tag of a style: bold, italic, underline, strike, superscript or subscript.
+     */
+    public function htmlTag(string $style): string
+    {
+        return $this->tags[$style] ?? '';
+    }
+
+    /**
+     * @param array<string, string> $htmlTags
+     */
+    private function assertHtmlTags(array $htmlTags): void
+    {
         foreach ($htmlTags as $style => $tag) {
             if (! array_key_exists($style, self::DEFAULT_HTML_TAGS)) {
-                throw new InvalidArgumentException(sprintf('"%s" is not a style: use %s.', $style, implode(', ', array_keys(self::DEFAULT_HTML_TAGS))));
+                throw new InvalidArgumentException(sprintf(
+                    '"%s" is not a style: use %s.',
+                    $style,
+                    implode(', ', array_keys(self::DEFAULT_HTML_TAGS)),
+                ));
             }
 
             if (1 !== preg_match('/^[a-z][a-z0-9]*$/', $tag)) {
-                throw new InvalidArgumentException(sprintf('"%s" is not a valid HTML tag: use lowercase letters and digits.', $tag));
+                throw new InvalidArgumentException(sprintf(
+                    '"%s" is not a valid HTML tag: use lowercase letters and digits.',
+                    $tag,
+                ));
             }
         }
+    }
 
+    /**
+     * @param list<string> $linkSchemes
+     */
+    private function assertSchemes(array $linkSchemes): void
+    {
         foreach ($linkSchemes as $linkScheme) {
             if (1 !== preg_match('/^[a-z][a-z0-9+.\-]*$/', $linkScheme)) {
-                throw new InvalidArgumentException(sprintf('"%s" is not a valid scheme: use lowercase letters, digits, "+", "." and "-".', $linkScheme));
+                throw new InvalidArgumentException(sprintf(
+                    '"%s" is not a valid scheme: use lowercase letters, digits, "+", "." and "-".',
+                    $linkScheme,
+                ));
             }
         }
+    }
 
-        $this->htmlTags = [...self::DEFAULT_HTML_TAGS, ...$htmlTags];
+    private function assertSign(?string $sign): void
+    {
+        if (null !== $sign && 1 !== preg_match('/\S/u', $sign)) {
+            throw new InvalidArgumentException(
+                'The sign cannot be empty: leave it out to read it in the first notes.',
+            );
+        }
     }
 }

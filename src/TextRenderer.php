@@ -38,7 +38,11 @@ final readonly class TextRenderer
                 continue;
             }
 
-            $counters = array_filter($counters, static fn (int $level): bool => $level <= $item->level, ARRAY_FILTER_USE_KEY);
+            $counters = array_filter(
+                $counters,
+                static fn (int $level): bool => $level <= $item->level,
+                ARRAY_FILTER_USE_KEY,
+            );
 
             if (ListType::Number === $item->type) {
                 $counters[$item->level] = ($counters[$item->level] ?? 0) + 1;

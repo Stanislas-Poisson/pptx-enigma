@@ -15,6 +15,9 @@ use IteratorAggregate;
  */
 final readonly class VoiceOvers implements Countable, IteratorAggregate
 {
+    private const int JSON_FLAGS = JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+                                                       | JSON_UNESCAPED_SLASHES;
+
     /**
      * @param string          $sign       the sign that delimited the voice-overs
      * @param list<VoiceOver> $voiceOvers
@@ -62,10 +65,10 @@ final readonly class VoiceOvers implements Countable, IteratorAggregate
         foreach ($this->voiceOvers as $voiceOver) {
             if ($voiceOver->speaker !== $speaker) {
                 $speaker = $voiceOver->speaker;
-                $html .= '<h2>' . htmlspecialchars($speaker, ENT_NOQUOTES | ENT_SUBSTITUTE) . "</h2>\n";
+                $html .= '<h2>' . $this->escape($speaker) . "</h2>\n";
             }
 
-            $html .= '<h3>' . htmlspecialchars($voiceOver->reference, ENT_NOQUOTES | ENT_SUBSTITUTE) . "</h3>\n" . $voiceOver->html . "\n";
+            $html .= '<h3>' . $this->escape($voiceOver->reference) . "</h3>\n" . $voiceOver->html . "\n";
         }
 
         return $html;
@@ -73,7 +76,7 @@ final readonly class VoiceOvers implements Countable, IteratorAggregate
 
     public function toJson(Format $format = Format::Html): string
     {
-        return json_encode($this->toArray($format), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return json_encode($this->toArray($format), self::JSON_FLAGS);
     }
 
     /**
@@ -86,7 +89,7 @@ final readonly class VoiceOvers implements Countable, IteratorAggregate
 
         foreach ($this->voiceOvers as $voiceOver) {
             if ($voiceOver->speaker !== $speaker) {
-                $text .= (null === $speaker ? '' : "\n") . $voiceOver->speaker . "\n" . str_repeat('=', max(1, mb_strlen($voiceOver->speaker))) . "\n";
+                $text .= (null === $speaker ? '' : "\n") . $this->title($voiceOver->speaker);
                 $speaker = $voiceOver->speaker;
             }
 
@@ -94,5 +97,15 @@ final readonly class VoiceOvers implements Countable, IteratorAggregate
         }
 
         return $text;
+    }
+
+    private function escape(string $text): string
+    {
+        return htmlspecialchars($text, ENT_NOQUOTES | ENT_SUBSTITUTE);
+    }
+
+    private function title(string $speaker): string
+    {
+        return $speaker . "\n" . str_repeat('=', max(1, mb_strlen($speaker))) . "\n";
     }
 }
