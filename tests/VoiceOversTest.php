@@ -12,12 +12,17 @@ use PPTXenigma\VoiceOvers;
 
 final class VoiceOversTest extends TestCase
 {
-    private function sample(): VoiceOvers
+    public function test_an_empty_result(): void
     {
-        return (new Extracts(__DIR__ . '/../examples/sample.pptx'))->extract();
+        $voiceOvers = new VoiceOvers('¤', []);
+
+        self::assertCount(0, $voiceOvers);
+        self::assertSame([], $voiceOvers->toArray());
+        self::assertSame('', $voiceOvers->toHtml());
+        self::assertSame('', $voiceOvers->toText());
     }
 
-    public function testCountsAndIteratesTheVoiceOvers(): void
+    public function test_counts_and_iterates_the_voice_overs(): void
     {
         $voiceOvers = $this->sample();
 
@@ -29,15 +34,14 @@ final class VoiceOversTest extends TestCase
         );
     }
 
-    public function testWritesTheContentInTheFormatThatIsAsked(): void
+    public function test_escapes_the_names_in_the_html_fragment(): void
     {
-        $voiceOver = iterator_to_array($this->sample())[3];
+        $html = (new VoiceOvers('¤', [new VoiceOver('A <b>', 'r & s', 1, '<p>x</p>', 'x')]))->toHtml();
 
-        self::assertSame('<p>Three things to remember:</p><ul><li>Notes are read slide by slide.</li><li>Voices are grouped by speaker.</li><li>References identify each voice-over.</li></ul>', $voiceOver->content(Format::Html));
-        self::assertSame("Three things to remember:\n- Notes are read slide by slide.\n- Voices are grouped by speaker.\n- References identify each voice-over.", $voiceOver->content(Format::Text));
+        self::assertSame("<h2>A &lt;b&gt;</h2>\n<h3>r &amp; s</h3>\n<p>x</p>\n", $html);
     }
 
-    public function testWritesAnArrayAndJson(): void
+    public function test_writes_an_array_and_json(): void
     {
         $voiceOvers = $this->sample();
 
@@ -48,7 +52,7 @@ final class VoiceOversTest extends TestCase
         self::assertStringContainsString('"w02_guide": "<p>Hello, I am the guide.</p>"', $voiceOvers->toJson());
     }
 
-    public function testWritesAnHtmlFragment(): void
+    public function test_writes_an_html_fragment(): void
     {
         $html = $this->sample()->toHtml();
 
@@ -57,7 +61,7 @@ final class VoiceOversTest extends TestCase
         self::assertSame(4, substr_count($html, '<h3>'));
     }
 
-    public function testWritesATextDocument(): void
+    public function test_writes_a_text_document(): void
     {
         $text = $this->sample()->toText();
 
@@ -65,20 +69,16 @@ final class VoiceOversTest extends TestCase
         self::assertStringEndsWith("- References identify each voice-over.\n", $text);
     }
 
-    public function testEscapesTheNamesInTheHtmlFragment(): void
+    public function test_writes_the_content_in_the_format_that_is_asked(): void
     {
-        $html = (new VoiceOvers('¤', [new VoiceOver('A <b>', 'r & s', 1, '<p>x</p>', 'x')]))->toHtml();
+        $voiceOver = iterator_to_array($this->sample())[3];
 
-        self::assertSame("<h2>A &lt;b&gt;</h2>\n<h3>r &amp; s</h3>\n<p>x</p>\n", $html);
+        self::assertSame('<p>Three things to remember:</p><ul><li>Notes are read slide by slide.</li><li>Voices are grouped by speaker.</li><li>References identify each voice-over.</li></ul>', $voiceOver->content(Format::Html));
+        self::assertSame("Three things to remember:\n- Notes are read slide by slide.\n- Voices are grouped by speaker.\n- References identify each voice-over.", $voiceOver->content(Format::Text));
     }
 
-    public function testAnEmptyResult(): void
+    private function sample(): VoiceOvers
     {
-        $voiceOvers = new VoiceOvers('¤', []);
-
-        self::assertCount(0, $voiceOvers);
-        self::assertSame([], $voiceOvers->toArray());
-        self::assertSame('', $voiceOvers->toHtml());
-        self::assertSame('', $voiceOvers->toText());
+        return (new Extracts(__DIR__ . '/../examples/sample.pptx'))->extract();
     }
 }

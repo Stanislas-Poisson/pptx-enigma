@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PPTXenigma;
 
+use InvalidArgumentException;
+
 /**
  * The command line: reads a presentation and writes its voice-overs.
  */
@@ -30,9 +32,9 @@ final class Cli
      */
     public function run(array $arguments, callable $out, callable $err): int
     {
-        $file = null;
-        $format = 'json';
-        $sign = null;
+        $file       = null;
+        $format     = 'json';
+        $sign       = null;
         $duplicates = Duplicates::Error;
 
         foreach ($arguments as $argument) {
@@ -44,19 +46,24 @@ final class Cli
 
             if (str_starts_with($argument, '--format=')) {
                 $format = substr($argument, 9);
-            } elseif (str_starts_with($argument, '--sign=')) {
+            }
+            elseif (str_starts_with($argument, '--sign=')) {
                 $sign = substr($argument, 7);
-            } elseif (str_starts_with($argument, '--duplicates=')) {
+            }
+            elseif (str_starts_with($argument, '--duplicates=')) {
                 $duplicates = Duplicates::tryFrom(substr($argument, 13));
 
                 if (null === $duplicates) {
                     return $this->usage($err, 'The value of --duplicates must be error, first or last.');
                 }
-            } elseif (str_starts_with($argument, '-')) {
+            }
+            elseif (str_starts_with($argument, '-')) {
                 return $this->usage($err, sprintf('Unknown option "%s".', $argument));
-            } elseif (null === $file) {
+            }
+            elseif (null === $file) {
                 $file = $argument;
-            } else {
+            }
+            else {
                 return $this->usage($err, 'Only one file can be read.');
             }
         }
@@ -65,21 +72,22 @@ final class Cli
             return $this->usage($err, 'The file to read is missing.');
         }
 
-        if (!in_array($format, ['json', 'html', 'text'], true)) {
+        if (! in_array($format, ['json', 'html', 'text'], true)) {
             return $this->usage($err, 'The value of --format must be json, html or text.');
         }
 
         try {
             $voiceOvers = (new Extracts($file, new Options(sign: $sign, duplicates: $duplicates)))->extract();
-        } catch (\InvalidArgumentException|ExtractionException $exception) {
+        }
+        catch (InvalidArgumentException|ExtractionException $exception) {
             $err($exception->getMessage() . "\n");
 
             return 1;
         }
 
         $out(match ($format) {
-            'html' => $voiceOvers->toHtml(),
-            'text' => $voiceOvers->toText(),
+            'html'  => $voiceOvers->toHtml(),
+            'text'  => $voiceOvers->toText(),
             default => $voiceOvers->toJson() . "\n",
         });
 

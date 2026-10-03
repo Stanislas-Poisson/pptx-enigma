@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace PPTXenigma;
 
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+
 /**
  * The voice-overs of a presentation, sorted by speaker, then in the order of the slides.
  *
- * @implements \IteratorAggregate<int, VoiceOver>
+ * @implements IteratorAggregate<int, VoiceOver>
  */
-final readonly class VoiceOvers implements \Countable, \IteratorAggregate
+final readonly class VoiceOvers implements Countable, IteratorAggregate
 {
     /**
      * @param string          $sign       the sign that delimited the voice-overs
@@ -18,8 +22,7 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
     public function __construct(
         public string $sign,
         private array $voiceOvers,
-    ) {
-    }
+    ) {}
 
     public function count(): int
     {
@@ -27,11 +30,11 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \ArrayIterator<int, VoiceOver>
+     * @return ArrayIterator<int, VoiceOver>
      */
-    public function getIterator(): \ArrayIterator
+    public function getIterator(): ArrayIterator
     {
-        return new \ArrayIterator($this->voiceOvers);
+        return new ArrayIterator($this->voiceOvers);
     }
 
     /**
@@ -48,17 +51,12 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
         return $voiceOvers;
     }
 
-    public function toJson(Format $format = Format::Html): string
-    {
-        return json_encode($this->toArray($format), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    }
-
     /**
      * A fragment of HTML: a heading for each speaker and each reference, then the voice-over.
      */
     public function toHtml(): string
     {
-        $html = '';
+        $html    = '';
         $speaker = null;
 
         foreach ($this->voiceOvers as $voiceOver) {
@@ -73,12 +71,17 @@ final readonly class VoiceOvers implements \Countable, \IteratorAggregate
         return $html;
     }
 
+    public function toJson(Format $format = Format::Html): string
+    {
+        return json_encode($this->toArray($format), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     /**
      * A document in plain text: a title for each speaker, then each reference between brackets and its text.
      */
     public function toText(): string
     {
-        $text = '';
+        $text    = '';
         $speaker = null;
 
         foreach ($this->voiceOvers as $voiceOver) {

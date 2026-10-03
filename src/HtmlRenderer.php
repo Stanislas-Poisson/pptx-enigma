@@ -9,9 +9,7 @@ namespace PPTXenigma;
  */
 final readonly class HtmlRenderer
 {
-    public function __construct(private Options $options)
-    {
-    }
+    public function __construct(private Options $options) {}
 
     /**
      * @param list<Paragraph> $paragraphs
@@ -19,6 +17,7 @@ final readonly class HtmlRenderer
     public function render(array $paragraphs): string
     {
         $html = '';
+
         /** @var list<string> $open the tag of each opened list, from the outermost */
         $open = [];
 
@@ -29,14 +28,14 @@ final readonly class HtmlRenderer
                 $html .= $this->closeLists($open);
                 $open = [];
 
-                if (!$paragraph->isBlank()) {
+                if (! $paragraph->isBlank()) {
                     $html .= '<p>' . $this->inlines($paragraph) . '</p>';
                 }
 
                 continue;
             }
 
-            $type = ListType::Bullet === $item->type ? 'ul' : 'ol';
+            $type  = ListType::Bullet === $item->type ? 'ul' : 'ol';
             $level = min($item->level, count($open));
 
             while (count($open) > $level + 1) {
@@ -50,7 +49,8 @@ final readonly class HtmlRenderer
                     $html .= '</' . array_pop($open) . '><' . $type . '>';
                     $open[] = $type;
                 }
-            } else {
+            }
+            else {
                 $html .= '<' . $type . '>';
                 $open[] = $type;
             }
@@ -75,28 +75,17 @@ final readonly class HtmlRenderer
         return $html;
     }
 
-    private function inlines(Paragraph $paragraph): string
-    {
-        $html = '';
-
-        foreach ($paragraph->inlines as $inline) {
-            $html .= $inline->lineBreak ? '<br>' : $this->inline($inline);
-        }
-
-        return $html;
-    }
-
     private function inline(Inline $inline): string
     {
-        $begin = '';
-        $end = '';
+        $begin  = '';
+        $end    = '';
         $styles = [
-            'bold' => $inline->bold,
-            'italic' => $inline->italic,
-            'underline' => $inline->underline,
-            'strike' => $inline->strike,
-            'superscript' => $inline->baseline > 0,
-            'subscript' => $inline->baseline < 0,
+            'bold'        => $inline->bold,
+            'italic'      => $inline->italic,
+            'underline'   => $inline->underline,
+            'strike'      => $inline->strike,
+            'superscript' => 0 < $inline->baseline,
+            'subscript'   => 0 > $inline->baseline,
         ];
 
         foreach ($styles as $style => $applies) {
@@ -114,5 +103,16 @@ final readonly class HtmlRenderer
         }
 
         return $begin . htmlspecialchars($inline->text, ENT_NOQUOTES | ENT_SUBSTITUTE) . $end;
+    }
+
+    private function inlines(Paragraph $paragraph): string
+    {
+        $html = '';
+
+        foreach ($paragraph->inlines as $inline) {
+            $html .= $inline->lineBreak ? '<br>' : $this->inline($inline);
+        }
+
+        return $html;
     }
 }

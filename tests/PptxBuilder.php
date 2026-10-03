@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PPTXenigma\Tests;
 
+use ZipArchive;
+
 /**
  * Builds small presentations for the tests: only the parts that the extractor reads.
  *
@@ -17,6 +19,7 @@ namespace PPTXenigma\Tests;
 final class PptxBuilder
 {
     private const NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
+
     private const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
     /**
@@ -25,18 +28,18 @@ final class PptxBuilder
     public static function build(array $slides): string
     {
         $files = [
-            '[Content_Types].xml' => '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
-            'ppt/presentation.xml' => self::presentation($slides),
+            '[Content_Types].xml'             => '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
+            'ppt/presentation.xml'            => self::presentation($slides),
             'ppt/_rels/presentation.xml.rels' => self::presentationRelationships($slides),
         ];
 
         foreach ($slides as $slide) {
-            $file = $slide['file'];
+            $file                                       = $slide['file'];
             $files['ppt/slides/slide' . $file . '.xml'] = '<p:sld ' . self::NS . '/>';
 
             if (null !== $slide['notes']) {
                 $files['ppt/slides/_rels/slide' . $file . '.xml.rels'] = self::slideRelationships($file);
-                $files['ppt/notesSlides/notesSlide' . $file . '.xml'] = self::notes($slide['notes']);
+                $files['ppt/notesSlides/notesSlide' . $file . '.xml']  = self::notes($slide['notes']);
 
                 if (isset($slide['links'])) {
                     $files['ppt/notesSlides/_rels/notesSlide' . $file . '.xml.rels'] = self::notesRelationships($slide['links']);
@@ -45,24 +48,6 @@ final class PptxBuilder
         }
 
         return self::zip($files);
-    }
-
-    /**
-     * @param array<string, string> $files the content of each file of the archive, by path
-     */
-    public static function zip(array $files): string
-    {
-        $path = (string) tempnam(sys_get_temp_dir(), 'pptx');
-        $zip = new \ZipArchive();
-        $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-
-        foreach ($files as $name => $content) {
-            $zip->addFromString($name, $content);
-        }
-
-        $zip->close();
-
-        return $path;
     }
 
     /**
@@ -83,6 +68,40 @@ final class PptxBuilder
             . '</p:spTree></p:cSld></p:notes>';
     }
 
+    /**
+     * @param array<string, string> $files the content of each file of the archive, by path
+     */
+    public static function zip(array $files): string
+    {
+        $path = (string) tempnam(sys_get_temp_dir(), 'pptx');
+        $zip  = new ZipArchive();
+        $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        foreach ($files as $name => $content) {
+            $zip->addFromString($name, $content);
+        }
+
+        $zip->close();
+
+        return $path;
+    }
+
+    /**
+     * @param array<string, string> $links
+     */
+    private static function notesRelationships(array $links): string
+    {
+        $relationships = '';
+
+        foreach ($links as $id => $url) {
+            $relationships .= '<Relationship Id="' . $id . '" Type="' . self::REL . '/hyperlink" Target="' . htmlspecialchars($url, ENT_QUOTES) . '" TargetMode="External"/>';
+        }
+
+        return '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="' . self::REL . '/notesMaster" Target="../notesMasters/notesMaster1.xml"/>'
+            . $relationships . '</Relationships>';
+    }
+
     private static function paragraph(mixed $paragraph): string
     {
         if (is_string($paragraph)) {
@@ -94,8 +113,8 @@ final class PptxBuilder
 
         if (isset($paragraph['bullet'])) {
             $bullet = match ($paragraph['bullet']) {
-                'ul' => '<a:buFont typeface="Arial"/><a:buChar char="•"/>',
-                'ol' => '<a:buFont typeface="Arial"/><a:buAutoNum type="arabicPeriod"/>',
+                'ul'    => '<a:buFont typeface="Arial"/><a:buChar char="•"/>',
+                'ol'    => '<a:buFont typeface="Arial"/><a:buAutoNum type="arabicPeriod"/>',
                 default => '<a:buFont typeface="Arial"/><a:buNone/>',
             };
             $properties = '<a:pPr lvl="' . ($paragraph['lvl'] ?? 0) . '">' . $bullet . '</a:pPr>';
@@ -108,33 +127,6 @@ final class PptxBuilder
         }
 
         return '<a:p>' . $properties . $runs . '</a:p>';
-    }
-
-    private static function run(mixed $run): string
-    {
-        if (is_string($run)) {
-            $run = ['t' => $run];
-        }
-
-        if (is_array($run) && array_key_exists('br', $run)) {
-            return '<a:br/>';
-        }
-
-        /** @var array{t: string, b?: string, i?: string, u?: string, strike?: string, baseline?: int, link?: string} $run */
-        $attributes = '';
-        $link = isset($run['link']) ? '<a:hlinkClick r:id="' . $run['link'] . '"/>' : '';
-
-        foreach (['b', 'i', 'u', 'strike'] as $style) {
-            if (isset($run[$style])) {
-                $attributes .= ' ' . $style . '="' . $run[$style] . '"';
-            }
-        }
-
-        if (isset($run['baseline'])) {
-            $attributes .= ' baseline="' . $run['baseline'] . '"';
-        }
-
-        return '<a:r><a:rPr' . $attributes . '>' . $link . '</a:rPr><a:t>' . htmlspecialchars($run['t'], ENT_NOQUOTES) . '</a:t></a:r>';
     }
 
     /**
@@ -165,20 +157,31 @@ final class PptxBuilder
         return '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' . $relationships . '</Relationships>';
     }
 
-    /**
-     * @param array<string, string> $links
-     */
-    private static function notesRelationships(array $links): string
+    private static function run(mixed $run): string
     {
-        $relationships = '';
-
-        foreach ($links as $id => $url) {
-            $relationships .= '<Relationship Id="' . $id . '" Type="' . self::REL . '/hyperlink" Target="' . htmlspecialchars($url, ENT_QUOTES) . '" TargetMode="External"/>';
+        if (is_string($run)) {
+            $run = ['t' => $run];
         }
 
-        return '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="' . self::REL . '/notesMaster" Target="../notesMasters/notesMaster1.xml"/>'
-            . $relationships . '</Relationships>';
+        if (is_array($run) && array_key_exists('br', $run)) {
+            return '<a:br/>';
+        }
+
+        /** @var array{t: string, b?: string, i?: string, u?: string, strike?: string, baseline?: int, link?: string} $run */
+        $attributes = '';
+        $link       = isset($run['link']) ? '<a:hlinkClick r:id="' . $run['link'] . '"/>' : '';
+
+        foreach (['b', 'i', 'u', 'strike'] as $style) {
+            if (isset($run[$style])) {
+                $attributes .= ' ' . $style . '="' . $run[$style] . '"';
+            }
+        }
+
+        if (isset($run['baseline'])) {
+            $attributes .= ' baseline="' . $run['baseline'] . '"';
+        }
+
+        return '<a:r><a:rPr' . $attributes . '>' . $link . '</a:rPr><a:t>' . htmlspecialchars($run['t'], ENT_NOQUOTES) . '</a:t></a:r>';
     }
 
     private static function slideRelationships(int $file): string

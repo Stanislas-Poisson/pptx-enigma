@@ -9,7 +9,7 @@ namespace PPTXenigma;
  */
 enum Duplicates: string
 {
-    case Error = 'error';
+    case Error     = 'error';
     case KeepFirst = 'first';
-    case KeepLast = 'last';
+    case KeepLast  = 'last';
 }

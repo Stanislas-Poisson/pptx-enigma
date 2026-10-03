@@ -15,8 +15,7 @@ final readonly class VoiceOver
         public int $slide,
         public string $html,
         public string $text,
-    ) {
-    }
+    ) {}
 
     public function content(Format $format): string
     {

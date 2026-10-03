@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace PPTXenigma;
 
+use DOMElement;
+use DOMXPath;
+use InvalidArgumentException;
+
 /**
  * Extracts the voice-over texts written in the notes of a presentation.
  *
@@ -18,31 +22,31 @@ namespace PPTXenigma;
 final readonly class Extracts
 {
     private const NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+
     private const NS_PRESENTATION = 'http://schemas.openxmlformats.org/presentationml/2006/main';
 
     public function __construct(
         private string $path,
         private Options $options = new Options(),
-    ) {
-    }
+    ) {}
 
     /**
      * Without a sign in the options, the sign is the text of the first notes of the
      * presentation, which are not searched for voice-overs.
      *
-     * @throws \InvalidArgumentException when the file is not a PowerPoint 2007+ presentation
-     * @throws ExtractionException       when the sign cannot be found, a reference is used twice (unless the
-     *                                   options keep one of them) or a voice-over is not closed
+     * @throws InvalidArgumentException when the file is not a PowerPoint 2007+ presentation
+     * @throws ExtractionException      when the sign cannot be found, a reference is used twice (unless the
+     *                                  options keep one of them) or a voice-over is not closed
      */
     public function extract(): VoiceOvers
     {
-        $notes = (new NotesReader())->read($this->path);
+        $notes      = (new NotesReader())->read($this->path);
         $firstSlide = null;
-        $sign = $this->options->sign;
+        $sign       = $this->options->sign;
 
         if (null === $sign) {
             $firstSlide = array_key_first($notes);
-            $sign = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]);
+            $sign       = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]);
         }
 
         if ('' === $sign) {
@@ -96,33 +100,23 @@ final readonly class Extracts
         return $found;
     }
 
-    private function readSign(Notes $notes): string
-    {
-        foreach ($this->paragraphs($notes) as $paragraph) {
-            if (!$paragraph->isBlank()) {
-                return $paragraph->trimmedText();
-            }
-        }
-
-        return '';
-    }
-
     /**
      * @return list<VoiceOver>
      */
     private function collect(Notes $notes, int $slide, string $sign): array
     {
-        $html = new HtmlRenderer($this->options);
-        $text = new TextRenderer($this->options);
-        $opening = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
+        $html       = new HtmlRenderer($this->options);
+        $text       = new TextRenderer($this->options);
+        $opening    = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
         $voiceOvers = [];
-        $speaker = null;
-        $reference = '';
+        $speaker    = null;
+        $reference  = '';
+
         /** @var list<Paragraph> $content */
         $content = [];
 
         foreach ($this->paragraphs($notes) as $paragraph) {
-            if (!str_starts_with($paragraph->trimmedText(), $sign)) {
+            if (! str_starts_with($paragraph->trimmedText(), $sign)) {
                 $content[] = $paragraph;
 
                 continue;
@@ -136,7 +130,7 @@ final readonly class Extracts
             $content = [];
 
             if (1 === preg_match($opening, $paragraph->trimmedText(), $marker)) {
-                $speaker = trim($marker[1]);
+                $speaker   = trim($marker[1]);
                 $reference = trim($marker[2]);
             }
         }
@@ -155,18 +149,29 @@ final readonly class Extracts
      */
     private function paragraphs(Notes $notes): array
     {
-        $xpath = new \DOMXPath($notes->document);
+        $xpath = new DOMXPath($notes->document);
         $xpath->registerNamespace('p', self::NS_PRESENTATION);
         $xpath->registerNamespace('a', self::NS_DRAWING);
-        $reader = new ParagraphReader($notes->hyperlinks);
+        $reader     = new ParagraphReader($notes->hyperlinks);
         $paragraphs = [];
 
         foreach ($xpath->query('//p:sp[p:nvSpPr/p:nvPr/p:ph[@type="body"]]/p:txBody/a:p') ?: [] as $paragraph) {
-            if ($paragraph instanceof \DOMElement) {
+            if ($paragraph instanceof DOMElement) {
                 $paragraphs[] = $reader->read($paragraph);
             }
         }
 
         return $paragraphs;
+    }
+
+    private function readSign(Notes $notes): string
+    {
+        foreach ($this->paragraphs($notes) as $paragraph) {
+            if (! $paragraph->isBlank()) {
+                return $paragraph->trimmedText();
+            }
+        }
+
+        return '';
     }
 }
