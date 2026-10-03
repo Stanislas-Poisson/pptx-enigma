@@ -1,8 +1,10 @@
 # Changelog
 
-All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project will follow [Semantic Versioning](https://semver.org/) once it has a first release. There is no release yet.
+All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project follows [Semantic Versioning](https://semver.org/) from the version 1.0.0.
 
-## Unreleased
+## 1.0.0 - 2026-10-04
+
+The first stable version: PPTX-Enigma was a proof of concept, and is now a tested library with a configuration, published as a Composer package.
 
 ### Added
 

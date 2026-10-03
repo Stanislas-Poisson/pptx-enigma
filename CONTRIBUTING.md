@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping. PPTX-Enigma is a PHP extractor of the voice-over texts of a PowerPoint file. It is a proof of concept.
+Thank you for helping. PPTX-Enigma is a PHP extractor of the voice-over texts of a PowerPoint file.
 
 ---
 
@@ -40,6 +40,24 @@ The tests build their presentations on the fly (`tests/PptxBuilder.php`) and use
 The rules come from [php-dev-tools](https://github.com/Stanislas-Poisson/php-dev-tools), which the files of this repository extend: `pint.json`, `phpstan.neon.dist`, `rector.php`, `phpinsights.php` and `.markdownlint.json` only hold what is specific to PPTX-Enigma. No file is excluded to hide an error.
 
 The `ci` check runs the same commands on PHP 8.3 and 8.4, and must pass before a change reaches `develop` or `main`.
+
+---
+
+## Releasing
+
+Reserved to the maintainer. Tags are plain `X.Y.Z`, signed, and made on `main` only.
+
+1. Merge `develop` into `main` with a pull request, and wait for the CI of `main`.
+2. Tag the merge commit and push the tag:
+
+   ```bash
+   git checkout main && git pull
+   git tag -s 1.0.0 -m "1.0.0"
+   git push origin 1.0.0
+   ```
+
+3. The `Release` workflow checks that the tag is on `main` and that the CI passed on that commit, then creates the GitHub release. Its notes list the merged pull requests by label and give the `composer require` line.
+4. Packagist reads the new tag by itself, once the package is submitted and its GitHub hook is active. The last step of the workflow warns when it does not list the version.
 
 ---
 
