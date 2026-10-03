@@ -7,9 +7,12 @@ namespace PPTXenigma\Tests;
 /**
  * Builds small presentations for the tests: only the parts that the extractor reads.
  *
- * A paragraph is a text, or an array with the keys "runs" (a list of texts or of
- * arrays with the keys "t", "b", "i", "u", "strike" and "baseline"), "bullet"
- * ("ul", "ol" or "none") and "lvl".
+ * A paragraph is a text, or an array with the keys "runs" (a list of texts, of
+ * arrays with the keys "t", "b", "i", "u", "strike", "baseline" and "link" (an id of
+ * relationship), or of ["br" => true] for a line break), "bullet" ("ul", "ol" or
+ * "none") and "lvl".
+ *
+ * A slide can also have the key "links", the URL of each link of its notes by id of relationship.
  */
 final class PptxBuilder
 {
@@ -17,7 +20,7 @@ final class PptxBuilder
     private const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
     /**
-     * @param list<array{file: int, notes: list<mixed>|null}> $slides the slides in the order of the presentation
+     * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides the slides in the order of the presentation
      */
     public static function build(array $slides): string
     {
@@ -34,6 +37,10 @@ final class PptxBuilder
             if (null !== $slide['notes']) {
                 $files['ppt/slides/_rels/slide' . $file . '.xml.rels'] = self::slideRelationships($file);
                 $files['ppt/notesSlides/notesSlide' . $file . '.xml'] = self::notes($slide['notes']);
+
+                if (isset($slide['links'])) {
+                    $files['ppt/notesSlides/_rels/notesSlide' . $file . '.xml.rels'] = self::notesRelationships($slide['links']);
+                }
             }
         }
 
@@ -109,8 +116,13 @@ final class PptxBuilder
             $run = ['t' => $run];
         }
 
-        /** @var array{t: string, b?: string, i?: string, u?: string, strike?: string, baseline?: int} $run */
+        if (is_array($run) && array_key_exists('br', $run)) {
+            return '<a:br/>';
+        }
+
+        /** @var array{t: string, b?: string, i?: string, u?: string, strike?: string, baseline?: int, link?: string} $run */
         $attributes = '';
+        $link = isset($run['link']) ? '<a:hlinkClick r:id="' . $run['link'] . '"/>' : '';
 
         foreach (['b', 'i', 'u', 'strike'] as $style) {
             if (isset($run[$style])) {
@@ -122,11 +134,11 @@ final class PptxBuilder
             $attributes .= ' baseline="' . $run['baseline'] . '"';
         }
 
-        return '<a:r><a:rPr' . $attributes . '/><a:t>' . htmlspecialchars($run['t'], ENT_NOQUOTES) . '</a:t></a:r>';
+        return '<a:r><a:rPr' . $attributes . '>' . $link . '</a:rPr><a:t>' . htmlspecialchars($run['t'], ENT_NOQUOTES) . '</a:t></a:r>';
     }
 
     /**
-     * @param list<array{file: int, notes: list<mixed>|null}> $slides
+     * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides
      */
     private static function presentation(array $slides): string
     {
@@ -140,7 +152,7 @@ final class PptxBuilder
     }
 
     /**
-     * @param list<array{file: int, notes: list<mixed>|null}> $slides
+     * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides
      */
     private static function presentationRelationships(array $slides): string
     {
@@ -151,6 +163,22 @@ final class PptxBuilder
         }
 
         return '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' . $relationships . '</Relationships>';
+    }
+
+    /**
+     * @param array<string, string> $links
+     */
+    private static function notesRelationships(array $links): string
+    {
+        $relationships = '';
+
+        foreach ($links as $id => $url) {
+            $relationships .= '<Relationship Id="' . $id . '" Type="' . self::REL . '/hyperlink" Target="' . htmlspecialchars($url, ENT_QUOTES) . '" TargetMode="External"/>';
+        }
+
+        return '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="' . self::REL . '/notesMaster" Target="../notesMasters/notesMaster1.xml"/>'
+            . $relationships . '</Relationships>';
     }
 
     private static function slideRelationships(int $file): string

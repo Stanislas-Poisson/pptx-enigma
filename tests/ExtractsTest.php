@@ -21,7 +21,7 @@ final class ExtractsTest extends TestCase
     }
 
     /**
-     * @param list<array{file: int, notes: list<mixed>|null}> $slides
+     * @param list<array{file: int, notes: list<mixed>|null, links?: array<string, string>}> $slides
      */
     private function extract(array $slides, ?string $sign = null): Extracts
     {
@@ -88,11 +88,71 @@ final class ExtractsTest extends TestCase
     {
         $extractor = $this->extract([
             self::slide(1, '¤'),
-            self::slide(2, '¤ VOICE (B) one', 'x', '¤ VOICE (A) two', 'y', '¤ END', 'ignored', '¤ VOICE (B) three', 'z'),
+            self::slide(2, '¤ VOICE (B) one', 'x', '¤ VOICE (A) two', 'y', '¤ END', 'ignored', '¤ VOICE (B) three', 'z', '¤'),
         ]);
 
-        // The last voice-over is not closed: it is ignored.
-        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>']], $extractor->getVoiceOver());
+        self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $extractor->getVoiceOver());
+    }
+
+    public function testRejectsAVoiceOverThatIsNotClosed(): void
+    {
+        $this->expectException(ExtractionException::class);
+        $this->expectExceptionMessage('The voice-over "Speaker" of the reference "ref" on slide 3 is not closed.');
+
+        $this->extract([
+            self::slide(1, '¤'),
+            ['file' => 2, 'notes' => null],
+            self::slide(3, '¤ VOICE (Speaker) ref', 'x'),
+        ]);
+    }
+
+    public function testConvertsTheLineBreaks(): void
+    {
+        $extractor = $this->extract([
+            self::slide(1, '¤'),
+            ['file' => 2, 'notes' => [
+                '¤ V (S) breaks',
+                ['runs' => ['one', ['br' => true], 'two']],
+                ['runs' => [['br' => true]]],
+                '¤',
+            ]],
+        ]);
+
+        self::assertSame('<p>one<br>two</p>', $extractor->getVoiceOver()['S']['breaks']);
+    }
+
+    public function testConvertsTheHyperlinks(): void
+    {
+        $extractor = $this->extract([
+            self::slide(1, '¤'),
+            [
+                'file' => 2,
+                'notes' => [
+                    '¤ V (S) links',
+                    ['runs' => [
+                        'See ',
+                        ['t' => 'the site', 'link' => 'rId10', 'b' => '1'],
+                        ' or ',
+                        ['t' => 'mail', 'link' => 'rId11'],
+                        ' or ',
+                        ['t' => 'script', 'link' => 'rId12'],
+                        ' or ',
+                        ['t' => 'unknown', 'link' => 'rId99'],
+                    ]],
+                    '¤',
+                ],
+                'links' => [
+                    'rId10' => 'https://example.com/?a=1&b="2"',
+                    'rId11' => 'mailto:me@example.com',
+                    'rId12' => "java\tscript:alert(1)",
+                ],
+            ],
+        ]);
+
+        self::assertSame(
+            '<p>See <a href="https://example.com/?a=1&amp;b=&quot;2&quot;"><b>the site</b></a> or <a href="mailto:me@example.com">mail</a> or script or unknown</p>',
+            $extractor->getVoiceOver()['S']['links'],
+        );
     }
 
     public function testTrimsTheSpeakerAndTheReference(): void

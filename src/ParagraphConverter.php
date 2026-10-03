@@ -10,11 +10,20 @@ namespace PPTXenigma;
 final class ParagraphConverter
 {
     private const NS_DRAWING = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+    private const NS_RELATIONSHIPS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    private const LINK_SCHEMES = ['http', 'https', 'mailto', 'tel'];
 
     /**
      * The HTML tag of each style, written in the order in which the tags are opened.
      */
     private const STYLES = ['b' => 'b', 'i' => 'i', 'u' => 'u', 'strike' => 's'];
+
+    /**
+     * @param array<string, string> $hyperlinks the URL of each link of the notes, by id of relationship
+     */
+    public function __construct(private readonly array $hyperlinks = [])
+    {
+    }
 
     /**
      * The text of a paragraph, without any style.
@@ -23,8 +32,8 @@ final class ParagraphConverter
     {
         $text = '';
 
-        foreach ($this->runs($paragraph) as $run) {
-            $text .= $run->textContent;
+        foreach ($this->inlines($paragraph) as $inline) {
+            $text .= 'r' === $inline->localName ? $inline->textContent : '';
         }
 
         return $text;
@@ -131,35 +140,77 @@ final class ParagraphConverter
 
     private function content(\DOMElement $paragraph): string
     {
+        if ('' === $this->trimmedText($paragraph)) {
+            return '';
+        }
+
         $html = '';
 
-        foreach ($this->runs($paragraph) as $run) {
-            $text = htmlspecialchars($run->textContent, ENT_NOQUOTES | ENT_SUBSTITUTE);
-            $properties = $run->getElementsByTagNameNS(self::NS_DRAWING, 'rPr')->item(0);
-            $begin = '';
-            $end = '';
+        foreach ($this->inlines($paragraph) as $inline) {
+            $html .= 'br' === $inline->localName ? '<br>' : $this->run($inline);
+        }
 
-            if ($properties instanceof \DOMElement) {
-                foreach (self::STYLES as $attribute => $tag) {
-                    if ($this->isStyled($properties->getAttribute($attribute))) {
-                        $begin .= '<' . $tag . '>';
-                        $end = '</' . $tag . '>' . $end;
-                    }
-                }
+        return $html;
+    }
 
-                $baseline = (int) $properties->getAttribute('baseline');
+    private function run(\DOMElement $run): string
+    {
+        $text = htmlspecialchars($run->textContent, ENT_NOQUOTES | ENT_SUBSTITUTE);
+        $properties = $run->getElementsByTagNameNS(self::NS_DRAWING, 'rPr')->item(0);
+        $begin = '';
+        $end = '';
 
-                if (0 !== $baseline) {
-                    $tag = $baseline > 0 ? 'sup' : 'sub';
+        if ($properties instanceof \DOMElement) {
+            foreach (self::STYLES as $attribute => $tag) {
+                if ($this->isStyled($properties->getAttribute($attribute))) {
                     $begin .= '<' . $tag . '>';
                     $end = '</' . $tag . '>' . $end;
                 }
             }
 
-            $html .= $begin . $text . $end;
+            $baseline = (int) $properties->getAttribute('baseline');
+
+            if (0 !== $baseline) {
+                $tag = $baseline > 0 ? 'sup' : 'sub';
+                $begin .= '<' . $tag . '>';
+                $end = '</' . $tag . '>' . $end;
+            }
+
+            $url = $this->hyperlink($properties);
+
+            if (null !== $url) {
+                $begin = '<a href="' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE) . '">' . $begin;
+                $end .= '</a>';
+            }
         }
 
-        return $this->isBlank($html) ? '' : $html;
+        return $begin . $text . $end;
+    }
+
+    /**
+     * The URL of the link of a run, if it has one with a safe scheme.
+     */
+    private function hyperlink(\DOMElement $properties): ?string
+    {
+        $link = $properties->getElementsByTagNameNS(self::NS_DRAWING, 'hlinkClick')->item(0);
+
+        if (!$link instanceof \DOMElement) {
+            return null;
+        }
+
+        $url = $this->hyperlinks[$link->getAttributeNS(self::NS_RELATIONSHIPS, 'id')] ?? null;
+
+        if (null === $url) {
+            return null;
+        }
+
+        $compact = preg_replace('/[\x00-\x20]+/', '', $url) ?? '';
+
+        if (1 !== preg_match('/^([a-z][a-z0-9+.\-]*):/i', $compact, $scheme) || !in_array(strtolower($scheme[1]), self::LINK_SCHEMES, true)) {
+            return null;
+        }
+
+        return $url;
     }
 
     private function isStyled(string $value): bool
@@ -167,24 +218,21 @@ final class ParagraphConverter
         return !in_array($value, ['', '0', 'false', 'none', 'noStrike'], true);
     }
 
-    private function isBlank(string $text): bool
-    {
-        return 1 === preg_match('/^[\s\x{00A0}]*$/u', $text);
-    }
-
     /**
+     * The runs of text and the line breaks of a paragraph, in order.
+     *
      * @return list<\DOMElement>
      */
-    private function runs(\DOMElement $paragraph): array
+    private function inlines(\DOMElement $paragraph): array
     {
-        $runs = [];
+        $inlines = [];
 
         foreach ($paragraph->childNodes as $child) {
-            if ($child instanceof \DOMElement && self::NS_DRAWING === $child->namespaceURI && 'r' === $child->localName) {
-                $runs[] = $child;
+            if ($child instanceof \DOMElement && self::NS_DRAWING === $child->namespaceURI && in_array($child->localName, ['r', 'br'], true)) {
+                $inlines[] = $child;
             }
         }
 
-        return $runs;
+        return $inlines;
     }
 }

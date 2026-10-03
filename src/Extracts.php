@@ -55,7 +55,7 @@ final class Extracts
      * presentation, which are not searched for voice-overs.
      *
      * @throws \InvalidArgumentException when the file is not a PowerPoint 2007+ presentation
-     * @throws ExtractionException       when the sign cannot be found or a reference is used twice
+     * @throws ExtractionException       when the sign cannot be found, a reference is used twice or a voice-over is not closed
      */
     public function extract(): self
     {
@@ -67,7 +67,7 @@ final class Extracts
             $sign = $this->sign ?? '';
         } else {
             $firstSlide = array_key_first($notes);
-            $sign = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]);
+            $sign = null === $firstSlide ? '' : $this->readSign($notes[$firstSlide]->document);
             $this->sign = '' === $sign ? null : $sign;
         }
 
@@ -75,9 +75,9 @@ final class Extracts
             throw new ExtractionException('No sign found: the first notes are empty.');
         }
 
-        foreach ($notes as $slide => $document) {
+        foreach ($notes as $slide => $page) {
             if ($slide !== $firstSlide) {
-                $this->collect($document, $slide, $sign);
+                $this->collect($page, $slide, $sign);
             }
         }
 
@@ -110,16 +110,16 @@ final class Extracts
         return '';
     }
 
-    private function collect(\DOMDocument $notes, int $slide, string $sign): void
+    private function collect(Notes $notes, int $slide, string $sign): void
     {
-        $converter = new ParagraphConverter();
+        $converter = new ParagraphConverter($notes->hyperlinks);
         $opening = '/^' . preg_quote($sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su';
         $speaker = null;
         $reference = '';
         /** @var list<\DOMElement> $content */
         $content = [];
 
-        foreach ($this->paragraphs($notes) as $paragraph) {
+        foreach ($this->paragraphs($notes->document) as $paragraph) {
             $text = $converter->trimmedText($paragraph);
 
             if (!str_starts_with($text, $sign)) {
@@ -139,6 +139,10 @@ final class Extracts
                 $speaker = trim($marker[1]);
                 $reference = trim($marker[2]);
             }
+        }
+
+        if (null !== $speaker) {
+            throw new ExtractionException(sprintf('The voice-over "%s" of the reference "%s" on slide %d is not closed.', $speaker, $reference, $slide));
         }
     }
 
