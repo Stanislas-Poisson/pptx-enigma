@@ -17,6 +17,8 @@ The extractor reads the notes of the slides, in the order of the presentation. I
 3. The **paragraphs of the text**, which can be styled and can be lists.
 4. A **closing line** that starts with the sign: `¤ VOICE OVER END`. Any other line that starts with the sign also closes the voice-over, so a marker line can open the next one.
 
+The closing sign can be different from the opening one, with the option `endSign`: with `sign: '<<'` and `endSign: '>>'`, `<< VOICE OVER (Narrator) w01_intro` opens a voice-over and a line that starts with `>>` closes it. A line that starts with the opening sign still closes the voice-over that is open, and opens the next one.
+
 A speaker can have several voice-overs in the same notes. By default a reference can be used only once per speaker (see the option `duplicates`).
 
 ## Installation
@@ -96,7 +98,8 @@ $voiceOvers = (new Extracts('presentation.pptx', $options))->extract();
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `sign` | `null` | The sign of the voice-overs. Without it, the sign is read in the first notes, which are then not searched for voice-overs. With it, all the notes are searched. |
+| `sign` | `null` | The sign that opens a voice-over. Without it, the sign is read in the first notes, which are then not searched for voice-overs. With it, all the notes are searched. |
+| `endSign` | `null` | The sign that closes a voice-over. Without it, the sign that opens a voice-over closes it too. |
 | `duplicates` | `Duplicates::Error` | What to do when a speaker uses a reference twice: `Error`, `KeepFirst` or `KeepLast`. |
 | `htmlTags` | `b`, `i`, `u`, `s`, `sup`, `sub` | The HTML tag of a style, by style: `bold`, `italic`, `underline`, `strike`, `superscript` and `subscript`. |
 | `linkSchemes` | `http`, `https`, `mailto`, `tel` | The schemes of the links that are kept. Any other link is written as plain text. |
@@ -112,7 +115,8 @@ vendor/bin/pptx-enigma examples/sample.pptx --format=text
 | Option | Description |
 | :--- | :--- |
 | `--format=json\|html\|text\|pdf` | How to write the voice-overs. The default is `json`, or `text` for a script. `pdf` needs `--split`. |
-| `--sign=SIGN` | The sign of the voice-overs. |
+| `--sign=SIGN` | The sign that opens a voice-over. |
+| `--end-sign=SIGN` | The sign that closes a voice-over. |
 | `--duplicates=error\|first\|last` | What to do when a speaker uses a reference twice. |
 | `--speaker=NAME` | Write the script of one speaker, as `text` or `html`, on the standard output. |
 | `--split=DIR` | Write the script of each speaker in a file of the directory, as `text` (`.txt`), `html` or `pdf`. |
@@ -215,7 +219,7 @@ vendor/bin/pptx-enigma examples/bakery.pptx --speaker=Baker --layout=below --no-
 ## Known limits
 
 - **It has not been checked on real exports** of PowerPoint or Google Slides. The tests and the examples were built with PHP and python-pptx (`examples/build_bakery.py` builds the bakery one).
-- **The markers are the ones above**: a sign followed by the speaker in parentheses. Only the sign can be changed.
+- **The markers are the ones above**: a sign followed by the speaker in parentheses. Only the opening sign and the closing sign can be changed.
 - **The size of the archive is not limited**: do not use it on files you do not trust.
 - The other formatting of PowerPoint (colours, sizes, fonts) is dropped.
 

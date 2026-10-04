@@ -20,6 +20,7 @@ final readonly class CliArguments
         public ?string $speaker = null,
         public ?string $split = null,
         public ScriptOptions $scriptOptions = new ScriptOptions(),
+        public ?string $endSign = null,
     ) {}
 
     /**

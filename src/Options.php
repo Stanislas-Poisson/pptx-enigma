@@ -38,6 +38,8 @@ final readonly class Options
      *                                           superscript and subscript
      * @param list<string>          $linkSchemes the schemes of the links that are kept, in lowercase; the other links
      *                                           are written as plain text
+     * @param string|null           $endSign     the sign that closes a voice-over; without it, the sign that opens
+     *                                           it closes it too
      *
      * @throws InvalidArgumentException when a setting is not valid
      */
@@ -46,8 +48,10 @@ final readonly class Options
         public Duplicates $duplicates = Duplicates::Error,
         array $htmlTags = [],
         public array $linkSchemes = ['http', 'https', 'mailto', 'tel'],
+        public ?string $endSign = null,
     ) {
         $this->assertSign($sign);
+        $this->assertEndSign($endSign);
         $this->assertHtmlTags($htmlTags);
         $this->assertSchemes($linkSchemes);
 
@@ -60,6 +64,15 @@ final readonly class Options
     public function htmlTag(string $style): string
     {
         return $this->tags[$style] ?? '';
+    }
+
+    private function assertEndSign(?string $endSign): void
+    {
+        if (null !== $endSign && 1 !== preg_match('/\S/u', $endSign)) {
+            throw new InvalidArgumentException(
+                'The closing sign cannot be empty: leave it out to close with the sign that opens.',
+            );
+        }
     }
 
     /**

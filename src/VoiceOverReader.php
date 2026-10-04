@@ -25,7 +25,7 @@ final class VoiceOverReader
     private array $voiceOvers = [];
 
     public function __construct(
-        private readonly string $sign,
+        private readonly Markers $markers,
         private readonly int $slide,
         private readonly HtmlRenderer $htmlRenderer,
         private readonly TextRenderer $textRenderer,
@@ -57,14 +57,17 @@ final class VoiceOverReader
     {
         $line = $paragraph->trimmedText();
 
-        if (! str_starts_with($line, $this->sign)) {
+        if (! $this->markers->isMarker($line)) {
             $this->content[] = $paragraph;
 
             return;
         }
 
         $this->close();
-        $this->open($line);
+
+        if (! $this->markers->closesOnly($line)) {
+            $this->open($line);
+        }
     }
 
     private function close(): void
@@ -89,7 +92,9 @@ final class VoiceOverReader
 
     private function open(string $line): void
     {
-        if (1 === preg_match('/^' . preg_quote($this->sign, '/') . '[^(]*\(([^)]*)\)(.*)$/su', $line, $marker)) {
+        $sign = preg_quote($this->markers->sign(), '/');
+
+        if (1 === preg_match('/^' . $sign . '[^(]*\(([^)]*)\)(.*)$/su', $line, $marker)) {
             $this->speaker   = trim($marker[1]);
             $this->reference = trim($marker[2]);
         }

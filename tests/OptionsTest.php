@@ -20,6 +20,8 @@ final class OptionsTest extends TestCase
     {
         yield 'empty sign' => [static fn (): Options => new Options(sign: ' '), 'The sign cannot be empty'];
 
+        yield 'empty closing sign' => [static fn (): Options => new Options(endSign: ' '), 'The closing sign cannot be empty'];
+
         yield 'unknown style' => [static fn (): Options => new Options(htmlTags: ['color' => 'b']), '"color" is not a style'];
 
         yield 'tag with a capital' => [static fn (): Options => new Options(htmlTags: ['bold' => 'B']), '"B" is not a valid HTML tag'];

@@ -42,6 +42,7 @@ final readonly class CliArgumentsReader
                 ! $cliInput->has('no-slides'),
                 ! $cliInput->has('no-counts'),
             ),
+            $cliInput->text('end-sign'),
         );
     }
 
