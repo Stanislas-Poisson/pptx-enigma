@@ -26,12 +26,13 @@ final readonly class CliArgumentsReader
         $script     = null !== $speaker || null !== $split;
 
         $this->checkFiles($cliInput);
+        $this->checkSign($cliInput);
         (new ScriptUse())->check($cliInput, $speaker, $split);
 
         return new CliArguments(
             $cliInput->files[0] ?? '',
             $this->format($cliInput, $script),
-            $cliInput->text('sign'),
+            $this->sign($cliInput),
             $cliInput->enum(Duplicates::class, 'duplicates', Duplicates::Error),
             $cliInput->has('help'),
             $speaker,
@@ -57,6 +58,13 @@ final readonly class CliArgumentsReader
         }
     }
 
+    private function checkSign(CliInput $cliInput): void
+    {
+        if ($cliInput->has('sign-in-notes') && $cliInput->has('sign')) {
+            throw new InvalidArgumentException('Use --sign or --sign-in-notes, not both.');
+        }
+    }
+
     private function format(CliInput $cliInput, bool $script): string
     {
         $format = $cliInput->text('format') ?? ($script ? 'text' : 'json');
@@ -70,5 +78,17 @@ final readonly class CliArgumentsReader
         }
 
         return $format;
+    }
+
+    /**
+     * The sign, "¤" when none is given, or null to read it in the first notes.
+     */
+    private function sign(CliInput $cliInput): ?string
+    {
+        if ($cliInput->has('sign-in-notes')) {
+            return null;
+        }
+
+        return $cliInput->text('sign') ?? Options::DEFAULT_SIGN;
     }
 }

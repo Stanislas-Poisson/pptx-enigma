@@ -35,7 +35,8 @@ final class OptionsTest extends TestCase
     {
         $options = new Options();
 
-        self::assertNull($options->sign);
+        self::assertSame('¤', $options->sign);
+        self::assertNull($options->endSign);
         self::assertSame(Duplicates::Error, $options->duplicates);
 
         foreach (Options::DEFAULT_HTML_TAGS as $style => $tag) {

@@ -17,7 +17,8 @@ final class Cli
 
         Options:
           --format=json|html|text|pdf how to write the voice-overs (default: json; text for a script)
-          --sign=SIGN                 the sign that opens a voice-over (default: the text of the first notes)
+          --sign=SIGN                 the sign that opens a voice-over (default: ¤)
+          --sign-in-notes             read the sign in the first notes instead of using one
           --end-sign=SIGN             the sign that closes a voice-over (default: the sign that opens it)
           --duplicates=error|first|last
                                       what to do when a speaker uses a reference twice (default: error)

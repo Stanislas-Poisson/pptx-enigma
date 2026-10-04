@@ -12,6 +12,28 @@ final class CliTest extends TestCase
 {
     private const string SAMPLE = __DIR__ . '/../examples/sample.pptx';
 
+    public function test_reads_the_sign_in_the_first_notes_when_asked(): void
+    {
+        $path = PptxBuilder::build([
+            ['file' => 1, 'notes' => ['§']],
+            ['file' => 2, 'notes' => ['§ V (A) r1', 'text', '§']],
+        ]);
+
+        try {
+            [$none]         = $this->execute([$path]);
+            [, $out]        = $this->execute([$path, '--sign-in-notes']);
+            [$both, , $err] = $this->execute([$path, '--sign-in-notes', '--sign=§']);
+        }
+        finally {
+            unlink($path);
+        }
+
+        self::assertSame(0, $none);
+        self::assertSame(['A' => ['r1' => '<p>text</p>']], json_decode($out, true, 512, JSON_THROW_ON_ERROR));
+        self::assertSame(2, $both);
+        self::assertStringStartsWith('Use --sign or --sign-in-notes, not both.', $err);
+    }
+
     public function test_reports_a_directory_that_cannot_be_written(): void
     {
         $file = (string) tempnam(sys_get_temp_dir(), 'pptx');

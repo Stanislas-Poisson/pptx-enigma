@@ -54,7 +54,7 @@ final class ExtractsTest extends TestCase
     {
         $this->expectException(ExtractionException::class);
 
-        $this->extract([['file' => 1, 'notes' => null]]);
+        $this->extract([['file' => 1, 'notes' => null]], new Options(sign: null));
     }
 
     public function test_a_voice_over_is_not_closed_by_the_opening_sign_alone_when_the_closing_sign_is_set(): void
@@ -190,7 +190,7 @@ final class ExtractsTest extends TestCase
         $this->expectException(ExtractionException::class);
         $this->expectExceptionMessage('No sign found');
 
-        $this->extract([$this->slide(1, ' ', "\u{00A0}"), $this->slide(2, '¤ V (S) r', 'x', '¤')]);
+        $this->extract([$this->slide(1, ' ', "\u{00A0}"), $this->slide(2, '¤ V (S) r', 'x', '¤')], new Options(sign: null));
     }
 
     public function test_extracts_again(): void
@@ -326,7 +326,7 @@ final class ExtractsTest extends TestCase
     {
         $voiceOvers = $this->extract(
             [$this->slide(1, '<<'), $this->slide(2, '<< V (A) r1', 'text', '>>')],
-            new Options(endSign: '>>'),
+            new Options(sign: null, endSign: '>>'),
         );
 
         self::assertSame(['A' => ['r1' => '<p>text</p>']], $voiceOvers->toArray());
@@ -389,6 +389,14 @@ final class ExtractsTest extends TestCase
         ]);
 
         self::assertSame(['The Guide' => ['ref 1' => '<p>x</p>']], $voiceOvers->toArray());
+    }
+
+    public function test_uses_the_default_sign_for_the_opening_and_the_closing_and_searches_every_note(): void
+    {
+        $voiceOvers = $this->extract([$this->slide(1, '¤ V (A) r1', 'first', '¤'), $this->slide(2, '¤ V (B) r2', 'second', '¤')]);
+
+        self::assertSame(['A' => ['r1' => '<p>first</p>'], 'B' => ['r2' => '<p>second</p>']], $voiceOvers->toArray());
+        self::assertSame('¤', $voiceOvers->sign);
     }
 
     public function test_uses_the_sign_that_is_set_and_searches_the_first_notes(): void

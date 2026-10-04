@@ -8,6 +8,7 @@ The first stable version: PPTX-Enigma was a proof of concept, and is now a teste
 
 ### Added
 
+- The sign has a default value, `¤`, for the voice-overs to open and to close. Reading it in the first notes is a choice: `sign: null`, or `--sign-in-notes` ([#34](https://github.com/Stanislas-Poisson/pptx-enigma/issues/34)).
 - The option `endSign`, and `--end-sign` on the command line: the sign that closes a voice-over can be different from the one that opens it ([#30](https://github.com/Stanislas-Poisson/pptx-enigma/issues/30)).
 - The script of a speaker, to send to a voice actor: `VoiceOvers::speakers()`, `forSpeaker()`, `script()` and `scripts()`, and a `Script` with `toText()`, `toHtml()`, `toPdf()` and the counts. `ScriptOptions` sets the layout of the reference (above, below, inline or left out), how the styles are written in the text (marks, uppercase or dropped), and whether the slide and the counts are written. The PDF needs the optional package dompdf ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
 - The command line options `--speaker`, `--split`, `--layout`, `--emphasis`, `--no-slides` and `--no-counts`, and the format `pdf` ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
