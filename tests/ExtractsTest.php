@@ -298,6 +298,20 @@ final class ExtractsTest extends TestCase
         self::assertSame('<p><a href="https://example.com">web</a> mail</p>', $voiceOvers->toArray()['S']['ref']);
     }
 
+    public function test_reads_a_presentation_that_libreoffice_wrote(): void
+    {
+        $voiceOvers    = (new Extracts(__DIR__ . '/../examples/bakery.pptx'))->extract();
+        $libreOffice   = (new Extracts(__DIR__ . '/fixtures/bakery-libreoffice.pptx'))->extract();
+
+        self::assertSame($voiceOvers->speakers(), $libreOffice->speakers());
+        self::assertSame($voiceOvers->toArray(Format::Text), $libreOffice->toArray(Format::Text));
+        self::assertStringContainsString(
+            '<p>The menu is on <a href="https://example.com/menu"><u>our website</u></a>.</p>',
+            $libreOffice->toArray()['Customer']['w05_order'],
+        );
+        self::assertStringContainsString('<ol><li>500 g of flour</li>', $libreOffice->toArray()['Baker']['w02_dough']);
+    }
+
     public function test_reads_several_voice_overs_in_the_same_notes_without_a_closing_line(): void
     {
         $voiceOvers = $this->extract([
