@@ -8,6 +8,10 @@ The first stable version: PPTX-Enigma was a proof of concept, and is now a teste
 
 ### Added
 
+- The script of a speaker, to send to a voice actor: `VoiceOvers::speakers()`, `forSpeaker()`, `script()` and `scripts()`, and a `Script` with `toText()`, `toHtml()`, `toPdf()` and the counts. `ScriptOptions` sets the layout of the reference (above, below, inline or left out), how the styles are written in the text (marks, uppercase or dropped), and whether the slide and the counts are written. The PDF needs the optional package dompdf ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+- The command line options `--speaker`, `--split`, `--layout`, `--emphasis`, `--no-slides` and `--no-counts`, and the format `pdf` ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+- `examples/bakery.pptx`, a fictional presentation with three speakers, styles, lists, a line break, a link and accents, and the script `examples/build_bakery.py` that builds it ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+
 - The line breaks and the hyperlinks of the notes, and an error for a voice-over that is not closed ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)).
 - The `Options` object (the sign, the duplicates, the HTML tags, the link schemes), the `VoiceOvers` result with the HTML, plain text, JSON and array formats, and the `bin/pptx-enigma` command ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)).
 
