@@ -214,7 +214,7 @@ vendor/bin/pptx-enigma examples/bakery.pptx --speaker=Baker --layout=below --no-
 
 ## Known limits
 
-- **It has not been checked on real exports** of PowerPoint or Google Slides. The tests and the examples were built with PHP and python-pptx (`examples/build_bakery.py` builds the bakery one).
+- **It has not been checked on real exports** of PowerPoint or Google Slides. The tests and the examples were built with PHP and python-pptx (`examples/build_bakery.py` builds the bakery one), and the bakery example, opened and saved again by LibreOffice Impress, is read the same way.
 - **The markers are the ones above**: a sign followed by the speaker in parentheses. Only the sign can be changed.
 - **The size of the archive is not limited**: do not use it on files you do not trust.
 - The other formatting of PowerPoint (colours, sizes, fonts) is dropped.
