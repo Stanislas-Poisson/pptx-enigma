@@ -26,13 +26,18 @@ final readonly class Options
     ];
 
     /**
+     * The sign that opens and closes the voice-overs when no other one is set.
+     */
+    public const string DEFAULT_SIGN = '¤';
+
+    /**
      * @var array<string, string> the HTML tag of each style, with the default ones for the styles that are left out
      */
     private array $tags;
 
     /**
-     * @param string|null           $sign        the sign that delimits the voice-overs; without it, the sign is the
-     *                                           text of the first notes, which are then not searched for voice-overs
+     * @param string|null           $sign        the sign that opens a voice-over, "¤" by default; with null, the sign
+     *                                           is the text of the first notes, which are then not searched
      * @param Duplicates            $duplicates  what to do when a speaker uses the same reference twice
      * @param array<string, string> $htmlTags    the HTML tag of a style, by style: bold, italic, underline, strike,
      *                                           superscript and subscript
@@ -44,7 +49,7 @@ final readonly class Options
      * @throws InvalidArgumentException when a setting is not valid
      */
     public function __construct(
-        public ?string $sign = null,
+        public ?string $sign = self::DEFAULT_SIGN,
         public Duplicates $duplicates = Duplicates::Error,
         array $htmlTags = [],
         public array $linkSchemes = ['http', 'https', 'mailto', 'tel'],

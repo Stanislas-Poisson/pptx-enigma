@@ -13,10 +13,11 @@ use InvalidArgumentException;
 final readonly class CliInput
 {
     private const array FLAGS = [
-        '-h'          => 'help',
-        '--help'      => 'help',
-        '--no-slides' => 'no-slides',
-        '--no-counts' => 'no-counts',
+        '-h'              => 'help',
+        '--help'          => 'help',
+        '--no-slides'     => 'no-slides',
+        '--no-counts'     => 'no-counts',
+        '--sign-in-notes' => 'sign-in-notes',
     ];
 
     private const array OPTIONS = [

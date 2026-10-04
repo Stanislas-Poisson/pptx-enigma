@@ -14,7 +14,7 @@ final readonly class CliArguments
     public function __construct(
         public string $file = '',
         public string $format = 'json',
-        public ?string $sign = null,
+        public ?string $sign = Options::DEFAULT_SIGN,
         public Duplicates $duplicates = Duplicates::Error,
         public bool $help = false,
         public ?string $speaker = null,

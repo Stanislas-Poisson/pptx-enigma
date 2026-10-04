@@ -12,7 +12,7 @@ PHP 8.3 or higher, with the `dom` and `zip` extensions. There is no other depend
 
 The extractor reads the notes of the slides, in the order of the presentation. It expects:
 
-1. A **sign**, a short marker that delimits the voice-overs, for example `¤`. Unless you set it, the sign is the text of the notes of the first slide that has notes. These first notes are only used to find the sign: they are not searched for voice-overs.
+1. A **sign**, a short marker that delimits the voice-overs: `¤` by default, and it can be changed. It opens a voice-over and, unless you set a closing sign, it closes it too. With `sign: null` (`--sign-in-notes`), the sign is the text of the notes of the first slide that has notes, which are then only used to find the sign: they are not searched for voice-overs.
 2. A **marker line** that starts with the sign, then the speaker between parentheses, then the reference: `¤ VOICE OVER (Narrator) w01_intro`. The words before the parentheses are free text. The speaker and the reference are trimmed.
 3. The **paragraphs of the text**, which can be styled and can be lists.
 4. A **closing line** that starts with the sign: `¤ VOICE OVER END`. Any other line that starts with the sign also closes the voice-over, so a marker line can open the next one.
@@ -98,7 +98,7 @@ $voiceOvers = (new Extracts('presentation.pptx', $options))->extract();
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `sign` | `null` | The sign that opens a voice-over. Without it, the sign is read in the first notes, which are then not searched for voice-overs. With it, all the notes are searched. |
+| `sign` | `'¤'` | The sign that opens a voice-over. With `null`, the sign is read in the first notes, which are then not searched for voice-overs. Otherwise, all the notes are searched. |
 | `endSign` | `null` | The sign that closes a voice-over. Without it, the sign that opens a voice-over closes it too. |
 | `duplicates` | `Duplicates::Error` | What to do when a speaker uses a reference twice: `Error`, `KeepFirst` or `KeepLast`. |
 | `htmlTags` | `b`, `i`, `u`, `s`, `sup`, `sub` | The HTML tag of a style, by style: `bold`, `italic`, `underline`, `strike`, `superscript` and `subscript`. |
@@ -115,7 +115,8 @@ vendor/bin/pptx-enigma examples/sample.pptx --format=text
 | Option | Description |
 | :--- | :--- |
 | `--format=json\|html\|text\|pdf` | How to write the voice-overs. The default is `json`, or `text` for a script. `pdf` needs `--split`. |
-| `--sign=SIGN` | The sign that opens a voice-over. |
+| `--sign=SIGN` | The sign that opens a voice-over. The default is `¤`. |
+| `--sign-in-notes` | Read the sign in the first notes instead. |
 | `--end-sign=SIGN` | The sign that closes a voice-over. |
 | `--duplicates=error\|first\|last` | What to do when a speaker uses a reference twice. |
 | `--speaker=NAME` | Write the script of one speaker, as `text` or `html`, on the standard output. |
