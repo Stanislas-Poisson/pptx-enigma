@@ -19,7 +19,16 @@ final readonly class CliInput
         '--no-counts' => 'no-counts',
     ];
 
-    private const array OPTIONS = ['format', 'sign', 'duplicates', 'speaker', 'split', 'layout', 'emphasis'];
+    private const array OPTIONS = [
+        'format',
+        'sign',
+        'end-sign',
+        'duplicates',
+        'speaker',
+        'split',
+        'layout',
+        'emphasis',
+    ];
 
     /**
      * @param array<string, string|true> $values the value of each option, and true for each flag
