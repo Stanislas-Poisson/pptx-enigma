@@ -38,10 +38,12 @@ final readonly class Extracts
         [$sign, $signedSlide]          = $this->sign($notes);
         $htmlRenderer                  = new HtmlRenderer($this->options);
         $textRenderer                  = new TextRenderer($this->options);
+        $marksRenderer                 = new TextRenderer($this->options, Emphasis::Marks);
+        $upperRenderer                 = new TextRenderer($this->options, Emphasis::Upper);
         $voiceOverIndex                = new VoiceOverIndex($this->options->duplicates);
 
         foreach (array_diff_key($notes, [$signedSlide => true]) as $slide => $note) {
-            $reader = new VoiceOverReader($sign, $slide, $htmlRenderer, $textRenderer);
+            $reader = new VoiceOverReader($sign, $slide, $htmlRenderer, $textRenderer, $marksRenderer, $upperRenderer);
 
             foreach ($reader->read($note->paragraphs()) as $voiceOver) {
                 $voiceOverIndex->add($voiceOver);

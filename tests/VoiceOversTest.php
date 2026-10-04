@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace PPTXenigma\Tests;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use PPTXenigma\Extracts;
 use PPTXenigma\Format;
+use PPTXenigma\Script;
 use PPTXenigma\VoiceOver;
 use PPTXenigma\VoiceOvers;
 
@@ -39,6 +41,38 @@ final class VoiceOversTest extends TestCase
         $html = (new VoiceOvers('¤', [new VoiceOver('A <b>', 'r & s', 1, '<p>x</p>', 'x')]))->toHtml();
 
         self::assertSame("<h2>A &lt;b&gt;</h2>\n<h3>r &amp; s</h3>\n<p>x</p>\n", $html);
+    }
+
+    public function test_gives_the_script_of_a_speaker_or_of_all(): void
+    {
+        $voiceOvers = $this->sample();
+        $scripts    = $voiceOvers->scripts();
+
+        self::assertSame(['Guide', 'Narrator'], array_keys($scripts));
+        self::assertContainsOnlyInstancesOf(Script::class, $scripts);
+        self::assertCount(2, $voiceOvers->script('Guide'));
+    }
+
+    public function test_lists_the_speakers_and_keeps_the_voice_overs_of_one(): void
+    {
+        $voiceOvers = $this->sample();
+
+        self::assertSame(['Guide', 'Narrator'], $voiceOvers->speakers());
+        self::assertSame([], (new VoiceOvers('¤', []))->speakers());
+
+        $narrator = $voiceOvers->forSpeaker('Narrator');
+
+        self::assertCount(2, $narrator);
+        self::assertSame(['Narrator'], $narrator->speakers());
+        self::assertSame('¤', $narrator->sign);
+    }
+
+    public function test_refuses_a_speaker_that_has_no_voice_over(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('There is no speaker "Nobody": the speakers are Guide, Narrator.');
+
+        $this->sample()->forSpeaker('Nobody');
     }
 
     public function test_writes_a_text_document(): void

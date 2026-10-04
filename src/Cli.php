@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PPTXenigma;
 
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * The command line: reads a presentation and writes its voice-overs.
@@ -15,10 +16,17 @@ final class Cli
         Usage: pptx-enigma <file.pptx> [options]
 
         Options:
-          --format=json|html|text     how to write the voice-overs (default: json)
+          --format=json|html|text|pdf how to write the voice-overs (default: json; text for a script)
           --sign=SIGN                 the sign of the voice-overs (default: the text of the first notes)
           --duplicates=error|first|last
                                       what to do when a speaker uses a reference twice (default: error)
+          --speaker=NAME              write the script of one speaker (text or html) instead
+          --split=DIR                 write one script per speaker in a directory (text, html or pdf)
+          --layout=above|below|inline|none
+                                      where the reference is in a script (default: above)
+          --emphasis=marks|upper|none how the styles are written in a text script (default: marks)
+          --no-slides                 do not write the slide of each voice-over in a script
+          --no-counts                 do not write the number of voice-overs and words in a script
           -h, --help                  show this help
 
         TXT;
@@ -67,12 +75,49 @@ final class Cli
             return 1;
         }
 
+        try {
+            $this->write($cliArguments, $voiceOvers, $out);
+        }
+        catch (InvalidArgumentException|MissingDependencyException|RuntimeException $exception) {
+            $err($exception->getMessage() . "\n");
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param callable(string):void $out
+     */
+    private function write(CliArguments $cliArguments, VoiceOvers $voiceOvers, callable $out): void
+    {
+        if (null !== $cliArguments->split) {
+            $scriptFiles = new ScriptFiles();
+            $paths       = $scriptFiles->write(
+                $voiceOvers,
+                $cliArguments->scriptOptions,
+                $cliArguments->split,
+                $cliArguments->format,
+            );
+
+            $out(implode("\n", $paths) . "\n");
+
+            return;
+        }
+
+        if (null !== $cliArguments->speaker) {
+            $script = $voiceOvers->script($cliArguments->speaker, $cliArguments->scriptOptions);
+
+            $out('html' === $cliArguments->format ? $script->toHtml() : $script->toText());
+
+            return;
+        }
+
         $out(match ($cliArguments->format) {
             'html'  => $voiceOvers->toHtml(),
             'text'  => $voiceOvers->toText(),
             default => $voiceOvers->toJson() . "\n",
         });
-
-        return 0;
     }
 }

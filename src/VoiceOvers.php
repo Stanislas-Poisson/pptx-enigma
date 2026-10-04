@@ -6,6 +6,7 @@ namespace PPTXenigma;
 
 use ArrayIterator;
 use Countable;
+use InvalidArgumentException;
 use IteratorAggregate;
 
 /**
@@ -33,11 +34,71 @@ final readonly class VoiceOvers implements Countable, IteratorAggregate
     }
 
     /**
+     * The voice-overs of one speaker only.
+     *
+     * @throws InvalidArgumentException when the speaker has no voice-over
+     */
+    public function forSpeaker(string $speaker): self
+    {
+        $voiceOvers = array_values(array_filter(
+            $this->voiceOvers,
+            static fn (VoiceOver $voiceOver): bool => $voiceOver->speaker === $speaker,
+        ));
+
+        if ([] === $voiceOvers) {
+            throw new InvalidArgumentException(sprintf(
+                'There is no speaker "%s": the speakers are %s.',
+                $speaker,
+                implode(', ', $this->speakers()),
+            ));
+        }
+
+        return new self($this->sign, $voiceOvers);
+    }
+
+    /**
      * @return ArrayIterator<int, VoiceOver>
      */
     public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->voiceOvers);
+    }
+
+    /**
+     * The script of one speaker, to send to a voice actor.
+     *
+     * @throws InvalidArgumentException when the speaker has no voice-over
+     */
+    public function script(string $speaker, ScriptOptions $scriptOptions = new ScriptOptions()): Script
+    {
+        return new Script($speaker, $this->forSpeaker($speaker)->voiceOvers, $scriptOptions);
+    }
+
+    /**
+     * The script of each speaker.
+     *
+     * @return array<string, Script> the scripts, by speaker
+     */
+    public function scripts(ScriptOptions $scriptOptions = new ScriptOptions()): array
+    {
+        $scripts = [];
+
+        foreach ($this->speakers() as $speaker) {
+            $scripts[$speaker] = $this->script($speaker, $scriptOptions);
+        }
+
+        return $scripts;
+    }
+
+    /**
+     * @return list<string> the speakers, in the order of the voice-overs
+     */
+    public function speakers(): array
+    {
+        return array_values(array_unique(array_map(
+            static fn (VoiceOver $voiceOver): string => $voiceOver->speaker,
+            $this->voiceOvers,
+        )));
     }
 
     /**

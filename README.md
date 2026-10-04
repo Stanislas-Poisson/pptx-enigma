@@ -1,12 +1,12 @@
 # ![PPTX-Enigma](assets/logo.jpg)
 
-PPTX-Enigma extracts the voice-over texts written in the speaker notes of a PowerPoint (`.pptx`) file. The texts are grouped by speaker and by reference, and the formatting of the notes (bold, italic, underline, strikethrough, superscript, subscript, line breaks, links, lists) is converted to HTML or to plain text.
+PPTX-Enigma extracts the voice-over texts written in the speaker notes of a PowerPoint (`.pptx`) file. The texts are grouped by speaker and by reference. The voice-overs of a speaker can be written as a script to send to a voice actor, as text, HTML or PDF. The formatting of the notes (bold, italic, underline, strikethrough, superscript, subscript, line breaks, links, lists) is converted to HTML or to plain text.
 
 > **Status: stable, `1.0.0`.** The extractor was rewritten, tested and given a configuration and a command line ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3), [#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)). It is published as a Composer package. It has been tested on generated presentations only, not on real PowerPoint exports. See [Known limits](#known-limits).
 
 ## Requirements
 
-PHP 8.3 or higher, with the `dom` and `zip` extensions. There is no other dependency. The file is read in memory: nothing is extracted on the disk.
+PHP 8.3 or higher, with the `dom` and `zip` extensions. There is no other dependency: the PDF of a script needs the optional package dompdf. The file is read in memory: nothing is extracted on the disk.
 
 ## The format of the notes
 
@@ -111,12 +111,17 @@ vendor/bin/pptx-enigma examples/sample.pptx --format=text
 
 | Option | Description |
 | :--- | :--- |
-| `--format=json\|html\|text` | How to write the voice-overs. The default is `json`. |
+| `--format=json\|html\|text\|pdf` | How to write the voice-overs. The default is `json`, or `text` for a script. `pdf` needs `--split`. |
 | `--sign=SIGN` | The sign of the voice-overs. |
 | `--duplicates=error\|first\|last` | What to do when a speaker uses a reference twice. |
+| `--speaker=NAME` | Write the script of one speaker, as `text` or `html`, on the standard output. |
+| `--split=DIR` | Write the script of each speaker in a file of the directory, as `text` (`.txt`), `html` or `pdf`. |
+| `--layout=above\|below\|inline\|none` | Where the reference is in a script. The default is `above`. |
+| `--emphasis=marks\|upper\|none` | How the styles are written in a text script. The default is `marks`. |
+| `--no-slides`, `--no-counts` | Leave out the slide of each voice-over, or the number of voice-overs and words. |
 | `-h`, `--help` | Show the help. |
 
-The exit code is `0` on success, `1` when the extraction fails (the message is written on the error output), and `2` when the command is not valid.
+The exit code is `0` on success, `1` when the extraction fails or a file cannot be written (the message is written on the error output), and `2` when the command is not valid.
 
 ### Output
 
@@ -132,9 +137,84 @@ The exit code is `0` on success, `1` when the extraction fails (the message is w
 
 The text is escaped in the HTML. A paragraph is a list item only when it has a bullet (`buChar`) or a number (`buAutoNum`): `buNone` is a paragraph.
 
+## Scripts for the voice actors
+
+A script holds the voice-overs of **one speaker**, with the reference and the slide of each one, so that it can be sent to a voice actor as it is. `examples/bakery.pptx` is a fictional presentation with three speakers, styles, lists, a line break, a link and accents:
+
+```php
+$voiceOvers = (new Extracts('examples/bakery.pptx'))->extract();
+
+$voiceOvers->speakers();                 // ['Baker', 'Customer', 'Narrator']
+echo $voiceOvers->script('Baker')->toText();
+```
+
+```text
+Baker
+=====
+2 voice-overs, 66 words
+
+[w02_dough] (slide 3)
+First, the dough. You need four things:
+1. 500 g of flour
+2. 350 ml of water
+3. 10 g of salt
+4. a pinch of yeast
+Mix them, then *__wait__*. The dough rises on its own.
+
+[w04_oven] (slide 4)
+The oven must be very hot. Remember:
+- 240 degrees
+- a tray of water at the bottom
+  - never open the door in the first ten minutes
+Bake for *thirty* minutes.
+```
+
+| Method | Description |
+| :--- | :--- |
+| `speakers()` | The speakers, in the order of the voice-overs. |
+| `forSpeaker($speaker)` | A `VoiceOvers` with this speaker only. |
+| `script($speaker, $options)` | The `Script` of a speaker. |
+| `scripts($options)` | The `Script` of each speaker, by speaker. |
+| `Script::toText()` | The script as a plain text. |
+| `Script::toHtml()` | The script as a standalone HTML document: the bold, italic, underline, lists and links are kept. |
+| `Script::toPdf()` | The same document as a PDF (A4), which needs [dompdf](https://github.com/dompdf/dompdf): `composer require dompdf/dompdf`. Without it, a `MissingDependencyException` says what to install. |
+| `Script::count()` and `wordCount()` | The number of voice-overs and of words. |
+
+An unknown speaker throws an `InvalidArgumentException` that lists the speakers.
+
+### Layout and styles
+
+The settings are given with an immutable `ScriptOptions` object:
+
+```php
+use PPTXenigma\Emphasis;
+use PPTXenigma\Layout;
+use PPTXenigma\ScriptOptions;
+
+$options = new ScriptOptions(layout: Layout::ReferenceInline, emphasis: Emphasis::Upper, showSlides: false);
+
+echo $voiceOvers->script('Customer', $options)->toText();
+```
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `layout` | `Layout::ReferenceAbove` | Where the reference is: `ReferenceAbove` (a line above the text), `ReferenceBelow` (a line below it), `ReferenceInline` (`[w05_order] Bonjour…`, at the start of the text) or `TextOnly` (no reference). |
+| `emphasis` | `Emphasis::Marks` | How the styles are written in the **text**: `Marks` (`*bold*`, `_italic_`, `__underline__`), `Upper` (the bold text in uppercase) or `None`. The HTML and the PDF always keep the real styles. |
+| `showSlides` | `true` | Write the slide that each voice-over comes from. |
+| `showCounts` | `true` | Write the number of voice-overs and of words under the title. |
+
+### Files
+
+With the command line, `--split` writes one file per speaker, named after the speaker (`baker.txt`, `customer.pdf`, and `speaker` for a name without a letter or a digit):
+
+```sh
+vendor/bin/pptx-enigma examples/bakery.pptx --split=scripts --format=pdf
+vendor/bin/pptx-enigma examples/bakery.pptx --speaker=Baker --layout=below --no-slides
+```
+
 ## Known limits
 
-- **It has not been checked on real exports** of PowerPoint or Google Slides. The tests and the example were built with PHP and python-pptx.
+- **It has not been checked on real exports** of PowerPoint or Google Slides. The tests and the examples were built with PHP and python-pptx (`examples/build_bakery.py` builds the bakery one).
 - **The markers are the ones above**: a sign followed by the speaker in parentheses. Only the sign can be changed.
 - **The size of the archive is not limited**: do not use it on files you do not trust.
 - The other formatting of PowerPoint (colours, sizes, fonts) is dropped.
