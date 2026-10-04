@@ -10,7 +10,14 @@ namespace PPTXenigma;
  */
 final readonly class TextRenderer
 {
-    public function __construct(private Options $options) {}
+    private EmphasisWriter $emphasisWriter;
+
+    public function __construct(
+        private Options $options,
+        Emphasis $emphasis = Emphasis::None,
+    ) {
+        $this->emphasisWriter = new EmphasisWriter($emphasis);
+    }
 
     /**
      * @param list<Paragraph> $paragraphs
@@ -71,8 +78,9 @@ final readonly class TextRenderer
                 continue;
             }
 
-            $url = Links::safeUrl($inline->url, $this->options);
-            $text .= null === $url || $url === $inline->text ? $inline->text : $inline->text . ' (' . $url . ')';
+            $url   = Links::safeUrl($inline->url, $this->options);
+            $words = $this->emphasisWriter->write($inline);
+            $text .= null === $url || $url === $inline->text ? $words : $words . ' (' . $url . ')';
         }
 
         return $text;

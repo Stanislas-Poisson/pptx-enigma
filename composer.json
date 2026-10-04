@@ -44,7 +44,11 @@
         "ext-dom": "*",
         "ext-zip": "*"
     },
+    "suggest": {
+        "dompdf/dompdf": "To write the scripts of the speakers as PDF files (^3.0)"
+    },
     "require-dev": {
+        "dompdf/dompdf": "^3",
         "phpunit/phpunit": "^11.5",
         "stanislas-poisson/php-dev-tools": "^1.0"
     },

@@ -12,14 +12,71 @@ final class CliTest extends TestCase
 {
     private const string SAMPLE = __DIR__ . '/../examples/sample.pptx';
 
+    public function test_reports_a_directory_that_cannot_be_written(): void
+    {
+        $file = (string) tempnam(sys_get_temp_dir(), 'pptx');
+
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            [$code, , $err] = $this->execute([self::SAMPLE, '--split=' . $file . '/sub']);
+        }
+        finally {
+            restore_error_handler();
+            unlink($file);
+        }
+
+        self::assertSame(1, $code);
+        self::assertStringContainsString('cannot be created', $err);
+    }
+
+    public function test_reports_a_file_that_cannot_be_written(): void
+    {
+        $directory = sys_get_temp_dir() . '/pptx-enigma-' . bin2hex(random_bytes(4));
+        mkdir($directory . '/guide.txt', 0o775, true);
+
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            [$code, , $err] = $this->execute([self::SAMPLE, '--split=' . $directory]);
+        }
+        finally {
+            restore_error_handler();
+            rmdir($directory . '/guide.txt');
+            rmdir($directory);
+        }
+
+        self::assertSame(1, $code);
+        self::assertStringContainsString('cannot be written', $err);
+    }
+
+    public function test_reports_a_speaker_that_does_not_exist(): void
+    {
+        [$code, $out, $err] = $this->execute([self::SAMPLE, '--speaker=Nobody']);
+
+        self::assertSame(1, $code);
+        self::assertSame('', $out);
+        self::assertStringContainsString('There is no speaker "Nobody"', $err);
+    }
+
     public function test_reports_a_wrong_command(): void
     {
         foreach ([
             [[], 'The file to read is missing.'],
             [[self::SAMPLE, self::SAMPLE], 'Only one file can be read.'],
-            [[self::SAMPLE, '--format=xml'], 'The value of --format must be json, html or text.'],
-            [[self::SAMPLE, '--duplicates=all'], 'The value of --duplicates must be error, first or last.'],
+            [[self::SAMPLE, '--format=xml'], 'The value of --format must be json, html, text or pdf.'],
+            [[self::SAMPLE, '--duplicates=all'], 'The value of --duplicates must be one of: error, first, last.'],
             [[self::SAMPLE, '--unknown'], 'Unknown option "--unknown".'],
+            [[self::SAMPLE, '--unknown=1'], 'Unknown option "--unknown".'],
+            [[self::SAMPLE, '-x'], 'Unknown option "-x".'],
+            [[self::SAMPLE, '--format=pdf'], 'A PDF is written in a directory: use --split=DIR.'],
+            [[self::SAMPLE, '--speaker=Guide', '--split=/tmp/x'], 'Use --speaker or --split, not both.'],
+            [[self::SAMPLE, '--split='], 'The value of --split is missing: it is a directory.'],
+            [[self::SAMPLE, '--speaker=Guide', '--format=json'], 'A script is written as text, html or pdf.'],
+            [[self::SAMPLE, '--layout=above'], '--layout needs --speaker or --split.'],
+            [[self::SAMPLE, '--no-slides'], '--no-slides needs --speaker or --split.'],
+            [[self::SAMPLE, '--speaker=Guide', '--layout=left'], 'The value of --layout must be one of: above, below, inline, none.'],
+            [[self::SAMPLE, '--speaker=Guide', '--emphasis=bold'], 'The value of --emphasis must be one of: marks, none, upper.'],
         ] as [$arguments, $message]) {
             [$code, $out, $err] = $this->execute($arguments);
 
@@ -81,6 +138,43 @@ final class CliTest extends TestCase
         self::assertSame('', $err);
         self::assertStringEndsWith("}\n", $out);
         self::assertSame((new Extracts(self::SAMPLE))->extract()->toArray(), json_decode($out, true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_writes_one_file_per_speaker(): void
+    {
+        $directory = sys_get_temp_dir() . '/pptx-enigma-' . bin2hex(random_bytes(4)) . '/sub';
+
+        [$code, $out, $err] = $this->execute([self::SAMPLE, '--split=' . $directory]);
+
+        self::assertSame(0, $code);
+        self::assertSame('', $err);
+        self::assertSame($directory . '/guide.txt' . "\n" . $directory . '/narrator.txt' . "\n", $out);
+        self::assertStringStartsWith("Guide\n=====\n", (string) file_get_contents($directory . '/guide.txt'));
+
+        $this->execute([self::SAMPLE, '--split=' . $directory . '/', '--format=html']);
+        $this->execute([self::SAMPLE, '--split=' . $directory, '--format=pdf']);
+
+        self::assertStringStartsWith('<!DOCTYPE html>', (string) file_get_contents($directory . '/narrator.html'));
+        self::assertStringStartsWith('%PDF-', (string) file_get_contents($directory . '/narrator.pdf'));
+
+        $files = glob($directory . '/*');
+        array_map(unlink(...), false === $files ? [] : $files);
+        rmdir($directory);
+        rmdir(dirname($directory));
+    }
+
+    public function test_writes_the_script_of_one_speaker(): void
+    {
+        [$code, $out, $err] = $this->execute([self::SAMPLE, '--speaker=Narrator', '--layout=inline', '--no-slides', '--no-counts']);
+
+        self::assertSame(0, $code);
+        self::assertSame('', $err);
+        self::assertStringStartsWith("Narrator\n========\n\n[w01_intro] Welcome to this \n*fictional* presentation", $out);
+
+        [, $html] = $this->execute([self::SAMPLE, '--speaker=Guide', '--format=html', '--emphasis=none']);
+
+        self::assertStringStartsWith('<!DOCTYPE html>', $html);
+        self::assertStringContainsString('<h1>Guide</h1>', $html);
     }
 
     /**

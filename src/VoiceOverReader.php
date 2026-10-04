@@ -29,6 +29,8 @@ final class VoiceOverReader
         private readonly int $slide,
         private readonly HtmlRenderer $htmlRenderer,
         private readonly TextRenderer $textRenderer,
+        private readonly TextRenderer $marksRenderer,
+        private readonly TextRenderer $upperRenderer,
     ) {}
 
     /**
@@ -74,6 +76,10 @@ final class VoiceOverReader
                 $this->slide,
                 $this->htmlRenderer->render($this->content),
                 $this->textRenderer->render($this->content),
+                [
+                    Emphasis::Marks->value => $this->marksRenderer->render($this->content),
+                    Emphasis::Upper->value => $this->upperRenderer->render($this->content),
+                ],
             );
         }
 
