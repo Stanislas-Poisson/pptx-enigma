@@ -26,11 +26,43 @@ final class ExtractsTest extends TestCase
         }
     }
 
+    public function test_a_closing_sign_that_is_not_the_opening_one_closes_the_voice_over(): void
+    {
+        $voiceOvers = $this->extract(
+            [
+                $this->slide(
+                    1,
+                    '<< V (A) r1',
+                    'first',
+                    '>>',
+                    'outside',
+                    '<< V (B) r2',
+                    'second',
+                    '<< V (C) r3',
+                    'third',
+                    '>> V END',
+                ),
+            ],
+            new Options(sign: '<<', endSign: '>>'),
+        );
+
+        self::assertSame(['A' => ['r1' => '<p>first</p>'], 'B' => ['r2' => '<p>second</p>'], 'C' => ['r3' => '<p>third</p>']], $voiceOvers->toArray());
+        self::assertSame('<<', $voiceOvers->sign);
+    }
+
     public function test_a_presentation_without_notes_has_no_sign(): void
     {
         $this->expectException(ExtractionException::class);
 
         $this->extract([['file' => 1, 'notes' => null]]);
+    }
+
+    public function test_a_voice_over_is_not_closed_by_the_opening_sign_alone_when_the_closing_sign_is_set(): void
+    {
+        $this->expectException(ExtractionException::class);
+        $this->expectExceptionMessage('not closed');
+
+        $this->extract([$this->slide(1, '<< V (A) r1', 'text')], new Options(sign: '<<', endSign: '>>'));
     }
 
     public function test_accepts_the_same_reference_for_two_speakers(): void
@@ -274,6 +306,16 @@ final class ExtractsTest extends TestCase
         ]);
 
         self::assertSame(['A' => ['two' => '<p>y</p>'], 'B' => ['one' => '<p>x</p>', 'three' => '<p>z</p>']], $voiceOvers->toArray());
+    }
+
+    public function test_reads_the_opening_sign_in_the_first_notes_with_a_closing_sign(): void
+    {
+        $voiceOvers = $this->extract(
+            [$this->slide(1, '<<'), $this->slide(2, '<< V (A) r1', 'text', '>>')],
+            new Options(endSign: '>>'),
+        );
+
+        self::assertSame(['A' => ['r1' => '<p>text</p>']], $voiceOvers->toArray());
     }
 
     public function test_reads_the_slides_in_the_order_of_the_presentation(): void

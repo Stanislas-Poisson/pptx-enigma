@@ -111,6 +111,21 @@ final class CliTest extends TestCase
         }
     }
 
+    public function test_uses_a_closing_sign(): void
+    {
+        $path = PptxBuilder::build([['file' => 1, 'notes' => ['<< V (A) r1', 'text', '>>', 'outside']]]);
+
+        try {
+            [$code, $out] = $this->execute([$path, '--sign=<<', '--end-sign=>>']);
+        }
+        finally {
+            unlink($path);
+        }
+
+        self::assertSame(0, $code);
+        self::assertSame(['A' => ['r1' => '<p>text</p>']], json_decode($out, true, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function test_uses_the_sign_and_the_duplicates_options(): void
     {
         [$code, $out] = $this->execute([self::SAMPLE, '--sign=¤', '--duplicates=last', '--format=json']);

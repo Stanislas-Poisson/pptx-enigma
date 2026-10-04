@@ -17,7 +17,8 @@ final class Cli
 
         Options:
           --format=json|html|text|pdf how to write the voice-overs (default: json; text for a script)
-          --sign=SIGN                 the sign of the voice-overs (default: the text of the first notes)
+          --sign=SIGN                 the sign that opens a voice-over (default: the text of the first notes)
+          --end-sign=SIGN             the sign that closes a voice-over (default: the sign that opens it)
           --duplicates=error|first|last
                                       what to do when a speaker uses a reference twice (default: error)
           --speaker=NAME              write the script of one speaker (text or html) instead
@@ -64,7 +65,11 @@ final class Cli
      */
     private function extract(CliArguments $cliArguments, callable $out, callable $err): int
     {
-        $options = new Options(sign: $cliArguments->sign, duplicates: $cliArguments->duplicates);
+        $options = new Options(
+            sign: $cliArguments->sign,
+            duplicates: $cliArguments->duplicates,
+            endSign: $cliArguments->endSign,
+        );
 
         try {
             $voiceOvers = (new Extracts($cliArguments->file, $options))->extract();
