@@ -1,0 +1,31 @@
+# Changelog
+
+All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project follows [Semantic Versioning](https://semver.org/) from the version 1.0.0.
+
+## 1.0.0 - 2026-10-04
+
+The first stable version: PPTX-Enigma was a proof of concept, and is now a tested library with a configuration, published as a Composer package.
+
+### Added
+
+- The sign has a default value, `¤`, for the voice-overs to open and to close. Reading it in the first notes is a choice: `sign: null`, or `--sign-in-notes` ([#34](https://github.com/Stanislas-Poisson/pptx-enigma/issues/34)).
+- The option `endSign`, and `--end-sign` on the command line: the sign that closes a voice-over can be different from the one that opens it ([#30](https://github.com/Stanislas-Poisson/pptx-enigma/issues/30)).
+- The script of a speaker, to send to a voice actor: `VoiceOvers::speakers()`, `forSpeaker()`, `script()` and `scripts()`, and a `Script` with `toText()`, `toHtml()`, `toPdf()` and the counts. `ScriptOptions` sets the layout of the reference (above, below, inline or left out), how the styles are written in the text (marks, uppercase or dropped), and whether the slide and the counts are written. The PDF needs the optional package dompdf ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+- The command line options `--speaker`, `--split`, `--layout`, `--emphasis`, `--no-slides` and `--no-counts`, and the format `pdf` ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+- `examples/bakery.pptx`, a fictional presentation with three speakers, styles, lists, a line break, a link and accents, and the script `examples/build_bakery.py` that builds it ([#28](https://github.com/Stanislas-Poisson/pptx-enigma/issues/28)).
+
+- The line breaks and the hyperlinks of the notes, and an error for a voice-over that is not closed ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)).
+- The `Options` object (the sign, the duplicates, the HTML tags, the link schemes), the `VoiceOvers` result with the HTML, plain text, JSON and array formats, and the `bin/pptx-enigma` command ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)).
+
+- The quality tools of the other zairakai projects: Pint, PHPStan with the strict rules, Rector, PHP Insights at 100 %, markdownlint, a `Makefile` and Git hooks ([#16](https://github.com/Stanislas-Poisson/pptx-enigma/issues/16)), now taken from php-dev-tools instead of a copy ([#18](https://github.com/Stanislas-Poisson/pptx-enigma/issues/18)).
+
+### Changed
+
+- The extractor is rewritten in small classes under `src/` (PSR-4, `PPTXenigma\`): the archive is read in memory, the slides are read in the order of the presentation, and the XML is read with DOM ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3)).
+- `extract()` returns a `VoiceOvers` object. The sign is an option, and `setSign()`, `getSign()` and `getVoiceOver()` are gone.
+- The web demo, the custom autoloader and the server configuration are removed.
+- The extractor is split into small classes (the archive, the relationships, the paths, the notes, the voice-over reader and its index) to keep PHP Insights at 100 %. `Options` has a method `htmlTag()` instead of a public property.
+
+### Fixed
+
+- The first paragraph of a voice-over is no longer dropped, `buNone` is a paragraph, and the errors are exceptions ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3)).

@@ -1,2 +1,4 @@
-/includes/PPTXenigma/Acces.php
-ftpsync.settings
+/vendor/
+/composer.lock
+/.phpunit.cache/
+/build/

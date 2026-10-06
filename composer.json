@@ -1,0 +1,118 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "stanislas-poisson/pptx-enigma",
+    "description": "Extracts the voice-over texts written in the speaker notes of a PowerPoint file, grouped by speaker and reference.",
+    "type": "library",
+    "keywords": [
+        "pptx",
+        "powerpoint",
+        "speaker-notes",
+        "voice-over",
+        "office-open-xml",
+        "parser",
+        "extractor",
+        "php"
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/Stanislas-Poisson/pptx-enigma",
+    "authors": [
+        {
+            "name": "Stanislas Poisson",
+            "email": "stanislas.p@the-white-rabbits.fr",
+            "homepage": "https://github.com/Stanislas-Poisson",
+            "role": "Maintainer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Stanislas-Poisson/pptx-enigma/issues",
+        "source": "https://github.com/Stanislas-Poisson/pptx-enigma",
+        "docs": "https://github.com/Stanislas-Poisson/pptx-enigma#readme",
+        "security": "https://github.com/Stanislas-Poisson/pptx-enigma/security/policy"
+    },
+    "funding": [
+        {
+            "type": "patreon",
+            "url": "https://www.patreon.com/c/zairakai"
+        },
+        {
+            "type": "other",
+            "url": "https://www.twitch.tv/zairakai"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "ext-dom": "*",
+        "ext-zip": "*"
+    },
+    "suggest": {
+        "dompdf/dompdf": "To write the scripts of the speakers as PDF files (^3.0)"
+    },
+    "require-dev": {
+        "dompdf/dompdf": "^3",
+        "phpunit/phpunit": "^11.5",
+        "stanislas-poisson/php-dev-tools": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PPTXenigma\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PPTXenigma\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/pptx-enigma"
+    ],
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.3.0"
+        },
+        "preferred-install": "dist",
+        "process-timeout": 0,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "extra": {
+        "authors": [
+            {
+                "email": [
+                    "stanislas.p@the-white-rabbits.fr"
+                ],
+                "name": "Stanislas Poisson",
+                "notes": "Primary maintainer",
+                "social": {
+                    "github": "https://github.com/Stanislas-Poisson",
+                    "gitlab": "https://gitlab.com/zairakai",
+                    "linkedin": "https://www.linkedin.com/in/stanislasp/",
+                    "stanislas-poisson": "https://stanislas-poisson.fr",
+                    "the-white-rabbits": "https://the-white-rabbits.fr",
+                    "twitch": "https://twitch.tv/zairakai"
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "analyse": "php-dev-tools analyse",
+        "cs": "php-dev-tools cs",
+        "cs:fix": "php-dev-tools cs:fix",
+        "insights": "php-dev-tools insights",
+        "markdown": "php-dev-tools markdown",
+        "quality": [
+            "php-dev-tools quality",
+            "@test"
+        ],
+        "quality:fast": "php-dev-tools quality:fast",
+        "quality:fix": "php-dev-tools quality:fix",
+        "rector": "php-dev-tools rector",
+        "rector:fix": "php-dev-tools rector:fix",
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text"
+    }
+}

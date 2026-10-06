@@ -1,0 +1,7 @@
+includes:
+    - vendor/stanislas-poisson/php-dev-tools/config/phpstan.neon
+
+parameters:
+    paths:
+        - src
+        - tests
