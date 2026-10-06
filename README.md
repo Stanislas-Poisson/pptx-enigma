@@ -4,6 +4,10 @@ PPTX-Enigma extracts the voice-over texts written in the speaker notes of a Powe
 
 > **Status: stable, `1.0.0`.** The extractor was rewritten, tested and given a configuration and a command line ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3), [#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)). It is published as a Composer package. It has been tested on generated presentations only, not on real PowerPoint exports. See [Known limits](#known-limits).
 
+## Documentation
+
+The documentation site is <https://stanislas-poisson.github.io/pptx-enigma/>: this guide and the reference of every class, read from the source, for each released version (selector at the top right, `next` is `main`). Build it with `cd docs && npm ci && npm run dev`.
+
 ## Requirements
 
 PHP 8.3 or higher, with the `dom` and `zip` extensions. There is no other dependency: the PDF of a script needs the optional package dompdf. The file is read in memory: nothing is extracted on the disk.

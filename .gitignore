@@ -2,3 +2,7 @@
 /composer.lock
 /.phpunit.cache/
 /build/
+
+/public/
+/docs/node_modules/
+/.npm/
