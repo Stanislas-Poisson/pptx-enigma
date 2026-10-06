@@ -251,6 +251,10 @@ make quality   # Pint, PHPStan, Rector, PHP Insights and PHPUnit
 2. Add the missing features ([#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4)): done.
 3. Turn PPTX-Enigma into a Composer package with a configuration ([#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)): done, released as `1.0.0`.
 
+## Statistics
+
+![Statistics of pptx-enigma][stats-card]
+
 ## License
 
 [MIT](LICENSE). Copyright (c) 2017 Stanislas Poisson.
@@ -266,3 +270,4 @@ make quality   # Pint, PHPStan, Rector, PHP Insights and PHPUnit
 [license]: LICENSE
 [docs-badge]: https://img.shields.io/badge/docs-online-blue
 [docs]: https://stanislas-poisson.github.io/pptx-enigma/
+[stats-card]: https://raw.githubusercontent.com/Stanislas-Poisson/Stanislas-Poisson/main/assets/projects/pptx-enigma.svg
