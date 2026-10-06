@@ -1,12 +1,19 @@
 # ![PPTX-Enigma](assets/logo.jpg)
 
+[![CI][ci-badge]][ci]
+[![Release][release-badge]][releases]
+[![Packagist][packagist-badge]][packagist]
+[![PHP][php-badge]][packagist]
+[![License][license-badge]][license]
+[![Docs][docs-badge]][docs]
+
 PPTX-Enigma extracts the voice-over texts written in the speaker notes of a PowerPoint (`.pptx`) file. The texts are grouped by speaker and by reference. The voice-overs of a speaker can be written as a script to send to a voice actor, as text, HTML or PDF. The formatting of the notes (bold, italic, underline, strikethrough, superscript, subscript, line breaks, links, lists) is converted to HTML or to plain text.
 
 > **Status: stable, `1.0.0`.** The extractor was rewritten, tested and given a configuration and a command line ([#3](https://github.com/Stanislas-Poisson/pptx-enigma/issues/3), [#4](https://github.com/Stanislas-Poisson/pptx-enigma/issues/4), [#5](https://github.com/Stanislas-Poisson/pptx-enigma/issues/5)). It is published as a Composer package. It has been tested on generated presentations only, not on real PowerPoint exports. See [Known limits](#known-limits).
 
 ## Documentation
 
-The documentation site is <https://stanislas-poisson.github.io/pptx-enigma/>: this guide and the reference of every class, read from the source, for each released version (selector at the top right, `next` is `main`). Build it with `cd docs && npm ci && npm run dev`.
+The [documentation site][docs] has this guide and the reference of every class, read from the source, for each released version (selector at the top right, `next` is `main`). Build it with `cd docs && npm ci && npm run dev`.
 
 ## Requirements
 
@@ -247,3 +254,15 @@ make quality   # Pint, PHPStan, Rector, PHP Insights and PHPUnit
 ## License
 
 [MIT](LICENSE). Copyright (c) 2017 Stanislas Poisson.
+
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/Stanislas-Poisson/pptx-enigma/ci.yml?branch=main&label=CI
+[ci]: https://github.com/Stanislas-Poisson/pptx-enigma/actions/workflows/ci.yml
+[release-badge]: https://img.shields.io/github/v/release/Stanislas-Poisson/pptx-enigma
+[releases]: https://github.com/Stanislas-Poisson/pptx-enigma/releases
+[packagist-badge]: https://img.shields.io/packagist/v/stanislas-poisson/pptx-enigma
+[packagist]: https://packagist.org/packages/stanislas-poisson/pptx-enigma
+[php-badge]: https://img.shields.io/packagist/dependency-v/stanislas-poisson/pptx-enigma/php
+[license-badge]: https://img.shields.io/github/license/Stanislas-Poisson/pptx-enigma
+[license]: LICENSE
+[docs-badge]: https://img.shields.io/badge/docs-online-blue
+[docs]: https://stanislas-poisson.github.io/pptx-enigma/
