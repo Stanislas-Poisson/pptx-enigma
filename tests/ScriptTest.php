@@ -147,7 +147,7 @@ final class ScriptTest extends TestCase
             "Waiting is the hardest part.\nTwo hours, without touching it.",
             $voiceOvers->script('Narrator')->toText(),
         );
-        self::assertStringContainsString('à l\'été', $voiceOvers->script('Customer')->toText());
+        self::assertStringContainsString("à l'été", $voiceOvers->script('Customer')->toText());
         self::assertStringContainsString(
             'our website (https://example.com/menu)',
             $voiceOvers->script('Customer')->toText(),
